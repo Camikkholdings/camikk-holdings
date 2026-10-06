@@ -11,7 +11,8 @@ export async function PUT(
 
     // Intentar actualizar en backend
     try {
-      await fetch(`http://localhost:4000/api/admin/llcs/${id}`, {
+      const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      await fetch(`${backendUrl}/api/admin/llcs/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

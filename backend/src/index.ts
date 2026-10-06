@@ -14,7 +14,19 @@ const app = express();
 // Configuración de CORS
 app.use(
   cors({
-    origin: [ENV.FRONTEND_URL, "http://localhost:3000", "http://localhost:3057"],
+    origin: (requestOrigin, callback) => {
+      if (!requestOrigin) return callback(null, true);
+
+      const cleanEnv = (ENV.FRONTEND_URL || "").replace(/\/$/, "");
+      const isVercel = requestOrigin.endsWith(".vercel.app");
+      const isLocal = requestOrigin.includes("localhost") || requestOrigin.includes("127.0.0.1");
+      const isCustomMatch = cleanEnv && requestOrigin === cleanEnv;
+
+      if (isCustomMatch || isVercel || isLocal) {
+        return callback(null, true);
+      }
+      return callback(null, requestOrigin);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "stripe-signature"],

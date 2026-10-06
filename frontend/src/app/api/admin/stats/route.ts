@@ -3,9 +3,9 @@ import { adminDataStore } from "@/lib/adminData";
 
 export async function GET() {
   try {
-    // Intentar consultar al backend en localhost:4000
     try {
-      const res = await fetch("http://localhost:4000/api/admin/stats", {
+      const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${backendUrl}/api/admin/stats`, {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
       });
