@@ -1,30 +1,15 @@
 {
-  "name": "camikk-holdings-llc-landing",
-  "version": "0.1.0",
+  "name": "camikk-holdings-workspace",
+  "version": "1.0.0",
   "private": true,
+  "description": "Workspace raíz para CAMIKK Holdings LLC: Frontend (Next.js) y Backend (Express, PostgreSQL, AWS S3, Stripe)",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
-  },
-  "dependencies": {
-    "lucide-react": "^1.48.0",
-    "next": "16.3.6",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.63.0",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "db:push": "npm --prefix backend run prisma:push",
+    "db:migrate": "npm --prefix backend run prisma:migrate",
+    "db:studio": "npm --prefix backend run prisma:studio"
   }
 }

@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  fullName  String
+  email     String    @unique
+  phone     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  orders        Order[]
+  dossiers      Dossier[]
+  consultations ConsultationBooking[]
+
+  @@map("clients")
+}
+
+model Order {
+  id                   String    @id @default(uuid())
+  clientId             String
+  client               Client    @relation(fields: [clientId], references: [id])
+  type                 String    // "LLC_FORMATION" | "CONSULTATION"
+  state                String?
+  serviceFee           Decimal
+  stateFee             Decimal   @default(0)
+  totalAmount          Decimal
+  stripeSessionId      String    @unique
+  stripePaymentIntentId String?
+  status               String    @default("PENDING") // "PENDING" | "PAID" | "FAILED"
+  paidAt               DateTime?
+  metadata             Json?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  dossier              Dossier?
+  consultation         ConsultationBooking?
+
+  @@map("orders")
+}
+
+model Dossier {
+  id                   String    @id @default(uuid())
+  token                String    @unique // Token único y seguro para acceso multi-dispositivo
+  orderId              String?   @unique
+  order                Order?    @relation(fields: [orderId], references: [id])
+  clientId             String
+  client               Client    @relation(fields: [clientId], references: [id])
+  status               String    @default("IN_PROGRESS") // "IN_PROGRESS" | "SUBMITTED"
+  currentStep          Int       @default(1)
+  submissionNumber     String?   @unique // Ej. "CMK-LLC-2026-849201"
+
+  // A. Información de la Compañía
+  companyState         String?
+  companyName          String?
+  companySecondChoice  String?
+  companyThirdChoice   String?
+  companyStartDate     String?
+  companyActivity      String?
+  companyDescription   String?
+  companyAddress       String?
+  companyCityStateZip  String?
+  companyPhone         String?
+  companyEmail         String?
+  companyWebsite       String?
+
+  // B. Estructura y Administración
+  totalMembers         Int       @default(1)
+  managementType       String?   @default("Member-Managed")
+  signingAuthority     String?
+  hasNonOwnerManagers  String?   @default("No")
+  managerNames         String?
+
+  // C. Información de cada Miembro (Array JSON detallado con porcentajes y roles)
+  membersData          Json?
+
+  // D. Información para EIN / IRS
+  einResponsiblePartyName     String?
+  einSsnOrItin               String?
+  einResponsiblePartyAddress String?
+  einHasEmployeesNext12Months String? @default("No")
+  einEstimatedEmployeesCount String?
+  einFirstWageDate           String?
+  einFiscalYearEndMonth      String? @default("Diciembre")
+  einIrsActivity             String?
+  einPreviouslyApplied       String? @default("No")
+
+  // E. Operating Agreement
+  oaProfitLossDistribution        String?
+  oaIsDistributionProportional   String? @default("Si")
+  oaAgreedDistributionExplanation String?
+  oaDecisionMaking               String? @default("Mayoría")
+  oaMemberWithdrawalTerms        String?
+  oaSpecialAgreements            String?
+
+  // F. Registered Office y Correspondencia
+  roConfirmedService             Boolean @default(true)
+  roPreferredMailingAddress      String?
+  roPrimaryContactPerson         String?
+
+  // H. Certificaciones Finales
+  certAccurate                   Boolean @default(false)
+  certAuthorized                 Boolean @default(false)
+  certGovernmentNotice           Boolean @default(false)
+  certDelaysNotice               Boolean @default(false)
+  electronicSignature            String?
+  signedDate                     String?
+
+  submittedAt                    DateTime?
+  createdAt                      DateTime  @default(now())
+  updatedAt                      DateTime  @updatedAt
+
+  // G. Documentos en S3
+  documents                      DossierDocument[]
+
+  @@map("dossiers")
+}
+
+model DossierDocument {
+  id           String   @id @default(uuid())
+  dossierId    String
+  dossier      Dossier  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  documentType String   // "RESPONSIBLE_PARTY_ID" | "ADDITIONAL_MEMBER_ID" | "RELATED_ENTITY_DOC" | "ADDITIONAL_DOC"
+  originalName String
+  s3Key        String
+  s3Url        String
+  mimeType     String?
+  sizeBytes    Int?
+  uploadedAt   DateTime @default(now())
+
+  @@map("dossier_documents")
+}
+
+model ConsultationBooking {
+  id              String    @id @default(uuid())
+  orderId         String?   @unique
+  order           Order?    @relation(fields: [orderId], references: [id])
+  clientId        String
+  client          Client    @relation(fields: [clientId], references: [id])
+  clientName      String
+  clientEmail     String
+  clientPhone     String
+  topic           String
+  description     String?
+  scheduledDate   DateTime
+  timeSlot        String    // Ej. "10:00 AM"
+  timeZone        String    @default("America/Bogota")
+  durationMinutes Int       @default(45)
+  status          String    @default("CONFIRMED") // "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"
+  meetingLink     String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("consultation_bookings")
+}

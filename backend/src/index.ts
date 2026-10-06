@@ -1,0 +1,64 @@
+import express from "express";
+import cors from "cors";
+import { ENV } from "./config/env";
+import { webhookRoutes } from "./routes/webhook.routes";
+import { checkoutRoutes } from "./routes/checkout.routes";
+import { dossierRoutes } from "./routes/dossier.routes";
+import { documentsRoutes } from "./routes/documents.routes";
+import { consultationRouter } from "./routes/consultation.routes";
+import { adminRoutes } from "./routes/admin.routes";
+import { pendingRecoveryService } from "./services/pending-recovery.service";
+
+const app = express();
+
+// Configuración de CORS
+app.use(
+  cors({
+    origin: [ENV.FRONTEND_URL, "http://localhost:3000", "http://localhost:3057"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "stripe-signature"],
+  })
+);
+
+// 1. Webhook de Stripe: Requiere raw body antes de express.json()
+app.use("/api/webhooks", webhookRoutes);
+
+// 2. Parsers para las demás rutas
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// 3. Healthcheck
+app.get("/api/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    service: "CAMIKK Holdings Backend API",
+    time: new Date().toISOString(),
+    postgresConfigured: !!ENV.DATABASE_URL,
+    stripeConfigured: !!ENV.STRIPE_SECRET_KEY,
+    s3Configured: !!(ENV.AWS_ACCESS_KEY_ID && ENV.AWS_SECRET_ACCESS_KEY),
+  });
+});
+
+// 4. Rutas principales
+app.use("/api/checkout", checkoutRoutes);
+app.use("/api/dossiers", dossierRoutes);
+app.use("/api/documents", documentsRoutes);
+app.use("/api/consultations", consultationRouter);
+app.use("/api/admin", adminRoutes);
+
+// Iniciar servidor
+app.listen(ENV.PORT, () => {
+  console.log(`\n======================================================`);
+  console.log(`🚀 CAMIKK Holdings Backend iniciado en http://localhost:${ENV.PORT}`);
+  console.log(`🔗 Frontend URL: ${ENV.FRONTEND_URL}`);
+  console.log(`🗄️  PostgreSQL: ${ENV.DATABASE_URL ? "Configurado" : "Pendiente en .env"}`);
+  console.log(`💳 Stripe: ${ENV.STRIPE_SECRET_KEY ? "Modo Activo" : "Modo Simulación"}`);
+  console.log(`☁️  AWS S3: ${ENV.AWS_ACCESS_KEY_ID ? "Conectado" : "Modo Mock local"}`);
+  console.log(`======================================================\n`);
+
+  // Iniciar tarea programada de recuperación de pagos pendientes (4x al día, 7am - 5pm hora NY)
+  pendingRecoveryService.initScheduler();
+});
+
+export default app;
