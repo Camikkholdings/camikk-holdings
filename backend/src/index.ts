@@ -60,14 +60,25 @@ app.use("/api/consultations", consultationRouter);
 app.use("/api/admin", adminRoutes);
 
 // Iniciar servidor
-app.listen(ENV.PORT, () => {
+app.listen(ENV.PORT, "0.0.0.0", async () => {
   console.log(`\n======================================================`);
-  console.log(`🚀 CAMIKK Holdings Backend iniciado en http://localhost:${ENV.PORT}`);
+  console.log(`🚀 CAMIKK Holdings Backend iniciado en puerto ${ENV.PORT}`);
   console.log(`🔗 Frontend URL: ${ENV.FRONTEND_URL}`);
   console.log(`🗄️  PostgreSQL: ${ENV.DATABASE_URL ? "Configurado" : "Pendiente en .env"}`);
   console.log(`💳 Stripe: ${ENV.STRIPE_SECRET_KEY ? "Modo Activo" : "Modo Simulación"}`);
   console.log(`☁️  AWS S3: ${ENV.AWS_ACCESS_KEY_ID ? "Conectado" : "Modo Mock local"}`);
   console.log(`======================================================\n`);
+
+  if (ENV.DATABASE_URL) {
+    try {
+      const { execSync } = await import("child_process");
+      console.log("🔄 Sincronizando esquema PostgreSQL (prisma db push)...");
+      execSync("npx prisma db push --accept-data-loss", { stdio: "inherit" });
+      console.log("✅ Esquema sincronizado exitosamente.");
+    } catch (err: any) {
+      console.warn("⚠️ Advertencia al sincronizar base de datos:", err?.message || err);
+    }
+  }
 
   // Iniciar tarea programada de recuperación de pagos pendientes (4x al día, 7am - 5pm hora NY)
   pendingRecoveryService.initScheduler();
