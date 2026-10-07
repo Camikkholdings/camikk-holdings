@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Building2,
@@ -275,10 +276,20 @@ export function PostPaymentDossier() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
   const [stepError, setStepError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [dossierToken, setDossierToken] = useState<string | null>(null);
   const [uploadedS3Docs, setUploadedS3Docs] = useState<S3Document[]>([]);
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  const clearFieldError = (key: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
 
   // Función para poblar el formulario desde el expediente persistido en backend
   const hydrateFromDossier = (dossier: any) => {
@@ -574,18 +585,24 @@ export function PostPaymentDossier() {
           ...prev,
           documents: { ...prev.documents, [stateKey]: file.name },
         }));
+        clearFieldError(`doc_${documentType}`);
+        setStepError(null);
       } else {
         // Fallback local
         setFormData((prev) => ({
           ...prev,
           documents: { ...prev.documents, [stateKey]: file.name },
         }));
+        clearFieldError(`doc_${documentType}`);
+        setStepError(null);
       }
     } catch {
       setFormData((prev) => ({
         ...prev,
         documents: { ...prev.documents, [stateKey]: file.name },
       }));
+      clearFieldError(`doc_${documentType}`);
+      setStepError(null);
     } finally {
       setUploadingDocType(null);
     }
@@ -654,64 +671,107 @@ export function PostPaymentDossier() {
   // Validaciones antes de avanzar de paso
   const validateCurrentStep = (step: number): boolean => {
     setStepError(null);
+    const errors: Record<string, string> = {};
+
     if (step === 1) {
       if (!formData.company.state) {
-        setStepError("Por favor selecciona el estado de registro.");
-        return false;
+        errors["company.state"] = "Por favor selecciona el estado de registro.";
       }
       if (!formData.company.name.trim()) {
-        setStepError("El nombre aprobado o solicitado de la LLC es obligatorio.");
-        return false;
+        errors["company.name"] = "El nombre de la LLC es obligatorio.";
       }
       if (!formData.company.activity.trim()) {
-        setStepError("La actividad principal del negocio es obligatoria.");
-        return false;
+        errors["company.activity"] = "La actividad principal del negocio es obligatoria.";
       }
       if (!formData.company.description.trim()) {
-        setStepError("La descripción detallada de productos o servicios es obligatoria.");
-        return false;
+        errors["company.description"] = "La descripción detallada de productos o servicios es obligatoria.";
       }
-      if (!formData.company.address.trim() || !formData.company.cityStateZip.trim()) {
-        setStepError("La dirección principal del negocio y ciudad/estado/ZIP son obligatorios.");
-        return false;
+      if (!formData.company.address.trim()) {
+        errors["company.address"] = "La dirección principal del negocio es obligatoria.";
+      }
+      if (!formData.company.cityStateZip.trim()) {
+        errors["company.cityStateZip"] = "La ciudad, estado y código postal son obligatorios.";
       }
     } else if (step === 2) {
       if (!formData.structure.signingAuthority.trim()) {
-        setStepError("Debes especificar quién tendrá autoridad para firmar en nombre de la LLC.");
-        return false;
+        errors["structure.signingAuthority"] = "Debes especificar quién tendrá autoridad para firmar en nombre de la LLC.";
       }
       for (let i = 0; i < formData.members.length; i++) {
         const m = formData.members[i];
-        if (!m.fullName.trim() || !m.address.trim() || !m.email.trim() || !m.phone.trim()) {
-          setStepError(`Por favor completa los datos obligatorios del Miembro ${i + 1}.`);
-          return false;
+        if (!m.fullName.trim()) {
+          errors[`member_${i}_fullName`] = "El nombre legal completo del miembro es obligatorio.";
+        }
+        if (!m.ownershipPercentage || m.ownershipPercentage <= 0) {
+          errors[`member_${i}_ownershipPercentage`] = "El porcentaje de propiedad debe ser mayor a 0%.";
+        }
+        if (!m.address.trim()) {
+          errors[`member_${i}_address`] = "La dirección residencial del miembro es obligatoria.";
+        }
+        if (!m.cityStateZip.trim()) {
+          errors[`member_${i}_cityStateZip`] = "Ciudad, estado y código postal son obligatorios.";
+        }
+        if (!m.email.trim()) {
+          errors[`member_${i}_email`] = "El correo electrónico del miembro es obligatorio.";
+        }
+        if (!m.phone.trim()) {
+          errors[`member_${i}_phone`] = "El teléfono de contacto del miembro es obligatorio.";
         }
       }
       const totalPercent = formData.members.reduce((acc, m) => acc + (Number(m.ownershipPercentage) || 0), 0);
       if (totalPercent !== 100) {
-        setStepError(`La suma de los porcentajes de propiedad debe ser exactamente 100%. Actualmente suma ${totalPercent}%.`);
-        return false;
+        errors["members_totalPercent"] = `La suma de los porcentajes de propiedad debe ser exactamente 100%. Actualmente suma ${totalPercent}%.`;
       }
     } else if (step === 3) {
-      if (!formData.ein.responsiblePartyName.trim() || !formData.ein.ssnOrItin.trim() || !formData.ein.responsiblePartyAddress.trim()) {
-        setStepError("Por favor completa los datos obligatorios del Responsible Party (Nombre, SSN/ITIN y Dirección).");
-        return false;
+      if (!formData.ein.responsiblePartyName.trim()) {
+        errors["ein.responsiblePartyName"] = "El nombre del Responsible Party es obligatorio.";
+      }
+      if (!formData.ein.ssnOrItin.trim()) {
+        errors["ein.ssnOrItin"] = "El SSN, ITIN o 'NO POSEE / EXTRANJERO' es obligatorio.";
+      }
+      if (!formData.ein.responsiblePartyAddress.trim()) {
+        errors["ein.responsiblePartyAddress"] = "La dirección física del Responsible Party es obligatoria.";
       }
       if (!formData.ein.irsActivity.trim()) {
-        setStepError("La actividad principal para fines del IRS es obligatoria.");
-        return false;
+        errors["ein.irsActivity"] = "La actividad principal para fines del IRS es obligatoria.";
       }
     } else if (step === 4) {
       if (!formData.operatingAgreement.profitLossDistribution.trim()) {
-        setStepError("Indica cómo se distribuirán las ganancias y pérdidas.");
-        return false;
+        errors["operatingAgreement.profitLossDistribution"] = "Indica cómo se distribuirán las ganancias y pérdidas.";
       }
     } else if (step === 5) {
       if (!formData.registeredOffice.confirmedService) {
-        setStepError("Debes confirmar el uso del servicio de Registered Office de CAMIKK Holdings.");
-        return false;
+        errors["registeredOffice.confirmedService"] = "Debes confirmar el uso del servicio de Registered Office de CAMIKK Holdings.";
+      }
+
+      // VALIDACIÓN OBLIGATORIA DE SUBIDA DE DOCUMENTOS:
+      const hasResponsibleId =
+        uploadedS3Docs.some((d) => d.documentType === "RESPONSIBLE_PARTY_ID") ||
+        Boolean(formData.documents.responsiblePartyIdName);
+      if (!hasResponsibleId) {
+        errors["doc_RESPONSIBLE_PARTY_ID"] =
+          "Debes subir la identificación vigente del Responsible Party para poder continuar al siguiente paso.";
+      }
+
+      const isMultiMember = formData.members.length > 1 || formData.structure.totalMembers > 1;
+      if (isMultiMember) {
+        const hasAdditionalMemberId =
+          uploadedS3Docs.some((d) => d.documentType === "ADDITIONAL_MEMBER_ID") ||
+          Boolean(formData.documents.additionalMembersIdName);
+        if (!hasAdditionalMemberId) {
+          errors["doc_ADDITIONAL_MEMBER_ID"] =
+            "Al haber más de un miembro, debes subir la identificación de los demás miembros para poder continuar.";
+        }
       }
     }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const firstError = Object.values(errors)[0];
+      setStepError(firstError);
+      return false;
+    }
+
+    setFieldErrors({});
     return true;
   };
 
@@ -725,6 +785,7 @@ export function PostPaymentDossier() {
 
   const handlePrevStep = () => {
     setStepError(null);
+    setFieldErrors({});
     setCurrentStep((prev) => Math.max(prev - 1, 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -733,18 +794,29 @@ export function PostPaymentDossier() {
     e.preventDefault();
     setStepError(null);
 
-    if (
-      !formData.certifications.accurate ||
-      !formData.certifications.authorized ||
-      !formData.certifications.governmentContactNotice ||
-      !formData.certifications.delaysNotice
-    ) {
-      setStepError("Debes marcar todas las certificaciones legales obligatorias para continuar.");
-      return;
+    const errors: Record<string, string> = {};
+    if (!formData.certifications.accurate) {
+      errors["certifications.accurate"] = "Debes confirmar que la información es verdadera y correcta.";
+    }
+    if (!formData.certifications.authorized) {
+      errors["certifications.authorized"] = "Debes autorizar a CAMIKK Holdings.";
+    }
+    if (!formData.certifications.governmentContactNotice) {
+      errors["certifications.governmentContactNotice"] = "Debes aceptar este aviso.";
+    }
+    if (!formData.certifications.delaysNotice) {
+      errors["certifications.delaysNotice"] = "Debes aceptar este aviso de tiempos y retrasos.";
+    }
+    if (!formData.certifications.signature.trim()) {
+      errors["certifications.signature"] = "Por favor escribe tu firma electrónica legal.";
+    }
+    if (!formData.certifications.date.trim()) {
+      errors["certifications.date"] = "Por favor indica la fecha.";
     }
 
-    if (!formData.certifications.signature.trim()) {
-      setStepError("Por favor escribe tu firma electrónica legal.");
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setStepError(Object.values(errors)[0]);
       return;
     }
 
@@ -989,13 +1061,14 @@ export function PostPaymentDossier() {
                   <select
                     id="company-state"
                     value={formData.company.state}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      clearFieldError("company.state");
                       setFormData((p) => ({
                         ...p,
                         company: { ...p.company, state: e.target.value as StateName },
-                      }))
-                    }
-                    className="form-select state-select-large"
+                      }));
+                    }}
+                    className={`form-select state-select-large ${fieldErrors["company.state"] ? "has-error" : ""}`}
                     required
                   >
                     <option value="">Selecciona uno de los 50 estados</option>
@@ -1005,6 +1078,12 @@ export function PostPaymentDossier() {
                       </option>
                     ))}
                   </select>
+                  {fieldErrors["company.state"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["company.state"]}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -1017,14 +1096,21 @@ export function PostPaymentDossier() {
                     required
                     placeholder="Ej. Nova Global Logistics LLC"
                     value={formData.company.name}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      clearFieldError("company.name");
                       setFormData((p) => ({
                         ...p,
                         company: { ...p.company, name: e.target.value },
-                      }))
-                    }
-                    className="form-input"
+                      }));
+                    }}
+                    className={`form-input ${fieldErrors["company.name"] ? "has-error" : ""}`}
                   />
+                  {fieldErrors["company.name"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["company.name"]}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group-row">
@@ -1090,14 +1176,21 @@ export function PostPaymentDossier() {
                       required
                       placeholder="Ej. Consultoría financiera y de negocios"
                       value={formData.company.activity}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("company.activity");
                         setFormData((p) => ({
                           ...p,
                           company: { ...p.company, activity: e.target.value },
-                        }))
-                      }
-                      className="form-input"
+                        }));
+                      }}
+                      className={`form-input ${fieldErrors["company.activity"] ? "has-error" : ""}`}
                     />
+                    {fieldErrors["company.activity"] && (
+                      <div className="field-error-msg">
+                        <AlertCircle size={14} />
+                        <span>{fieldErrors["company.activity"]}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1111,14 +1204,21 @@ export function PostPaymentDossier() {
                     required
                     placeholder="Describe detalladamente qué comercializa o prestará tu empresa, a qué tipo de clientes y en qué canales..."
                     value={formData.company.description}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      clearFieldError("company.description");
                       setFormData((p) => ({
                         ...p,
                         company: { ...p.company, description: e.target.value },
-                      }))
-                    }
-                    className="form-textarea"
+                      }));
+                    }}
+                    className={`form-textarea ${fieldErrors["company.description"] ? "has-error" : ""}`}
                   />
+                  {fieldErrors["company.description"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["company.description"]}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group-row">
@@ -1132,14 +1232,21 @@ export function PostPaymentDossier() {
                       required
                       placeholder="Ej. 101 Hamilton St. Suite 351"
                       value={formData.company.address}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("company.address");
                         setFormData((p) => ({
                           ...p,
                           company: { ...p.company, address: e.target.value },
-                        }))
-                      }
-                      className="form-input"
+                        }));
+                      }}
+                      className={`form-input ${fieldErrors["company.address"] ? "has-error" : ""}`}
                     />
+                    {fieldErrors["company.address"] && (
+                      <div className="field-error-msg">
+                        <AlertCircle size={14} />
+                        <span>{fieldErrors["company.address"]}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -1152,14 +1259,21 @@ export function PostPaymentDossier() {
                       required
                       placeholder="Ej. Allentown, PA 18101"
                       value={formData.company.cityStateZip}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("company.cityStateZip");
                         setFormData((p) => ({
                           ...p,
                           company: { ...p.company, cityStateZip: e.target.value },
-                        }))
-                      }
-                      className="form-input"
+                        }));
+                      }}
+                      className={`form-input ${fieldErrors["company.cityStateZip"] ? "has-error" : ""}`}
                     />
+                    {fieldErrors["company.cityStateZip"] && (
+                      <div className="field-error-msg">
+                        <AlertCircle size={14} />
+                        <span>{fieldErrors["company.cityStateZip"]}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1268,14 +1382,21 @@ export function PostPaymentDossier() {
                       required
                       placeholder="Ej. Nombre del miembro principal o todos los miembros"
                       value={formData.structure.signingAuthority}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("structure.signingAuthority");
                         setFormData((p) => ({
                           ...p,
                           structure: { ...p.structure, signingAuthority: e.target.value },
-                        }))
-                      }
-                      className="form-input"
+                        }));
+                      }}
+                      className={`form-input ${fieldErrors["structure.signingAuthority"] ? "has-error" : ""}`}
                     />
+                    {fieldErrors["structure.signingAuthority"] && (
+                      <div className="field-error-msg">
+                        <AlertCircle size={14} />
+                        <span>{fieldErrors["structure.signingAuthority"]}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1337,6 +1458,13 @@ export function PostPaymentDossier() {
                   </button>
                 </div>
 
+                {fieldErrors["members_totalPercent"] && (
+                  <div className="field-error-msg" style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: "8px", padding: "10px 14px", margin: "12px 0", fontSize: "0.875rem" }}>
+                    <AlertCircle size={16} />
+                    <span>{fieldErrors["members_totalPercent"]}</span>
+                  </div>
+                )}
+
                 {formData.members.map((member, index) => (
                   <div key={member.id} className="member-card">
                     <div className="member-card-top">
@@ -1365,9 +1493,18 @@ export function PostPaymentDossier() {
                           required
                           placeholder="Tal como figura en el pasaporte o ID"
                           value={member.fullName}
-                          onChange={(e) => updateMember(index, "fullName", e.target.value)}
-                          className="form-input"
+                          onChange={(e) => {
+                            clearFieldError(`member_${index}_fullName`);
+                            updateMember(index, "fullName", e.target.value);
+                          }}
+                          className={`form-input ${fieldErrors[`member_${index}_fullName`] ? "has-error" : ""}`}
                         />
+                        {fieldErrors[`member_${index}_fullName`] && (
+                          <div className="field-error-msg">
+                            <AlertCircle size={14} />
+                            <span>{fieldErrors[`member_${index}_fullName`]}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="form-group">
@@ -1381,11 +1518,19 @@ export function PostPaymentDossier() {
                           max={100}
                           required
                           value={member.ownershipPercentage}
-                          onChange={(e) =>
-                            updateMember(index, "ownershipPercentage", Number(e.target.value))
-                          }
-                          className="form-input"
+                          onChange={(e) => {
+                            clearFieldError(`member_${index}_ownershipPercentage`);
+                            clearFieldError("members_totalPercent");
+                            updateMember(index, "ownershipPercentage", Number(e.target.value));
+                          }}
+                          className={`form-input ${fieldErrors[`member_${index}_ownershipPercentage`] ? "has-error" : ""}`}
                         />
+                        {fieldErrors[`member_${index}_ownershipPercentage`] && (
+                          <div className="field-error-msg">
+                            <AlertCircle size={14} />
+                            <span>{fieldErrors[`member_${index}_ownershipPercentage`]}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1400,9 +1545,18 @@ export function PostPaymentDossier() {
                           required
                           placeholder="Calle, número, depto / apto"
                           value={member.address}
-                          onChange={(e) => updateMember(index, "address", e.target.value)}
-                          className="form-input"
+                          onChange={(e) => {
+                            clearFieldError(`member_${index}_address`);
+                            updateMember(index, "address", e.target.value);
+                          }}
+                          className={`form-input ${fieldErrors[`member_${index}_address`] ? "has-error" : ""}`}
                         />
+                        {fieldErrors[`member_${index}_address`] && (
+                          <div className="field-error-msg">
+                            <AlertCircle size={14} />
+                            <span>{fieldErrors[`member_${index}_address`]}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="form-group">
@@ -1415,9 +1569,18 @@ export function PostPaymentDossier() {
                           required
                           placeholder="Ciudad, Provincia o Estado, Código Postal"
                           value={member.cityStateZip}
-                          onChange={(e) => updateMember(index, "cityStateZip", e.target.value)}
-                          className="form-input"
+                          onChange={(e) => {
+                            clearFieldError(`member_${index}_cityStateZip`);
+                            updateMember(index, "cityStateZip", e.target.value);
+                          }}
+                          className={`form-input ${fieldErrors[`member_${index}_cityStateZip`] ? "has-error" : ""}`}
                         />
+                        {fieldErrors[`member_${index}_cityStateZip`] && (
+                          <div className="field-error-msg">
+                            <AlertCircle size={14} />
+                            <span>{fieldErrors[`member_${index}_cityStateZip`]}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1431,9 +1594,18 @@ export function PostPaymentDossier() {
                           type="email"
                           required
                           value={member.email}
-                          onChange={(e) => updateMember(index, "email", e.target.value)}
-                          className="form-input"
+                          onChange={(e) => {
+                            clearFieldError(`member_${index}_email`);
+                            updateMember(index, "email", e.target.value);
+                          }}
+                          className={`form-input ${fieldErrors[`member_${index}_email`] ? "has-error" : ""}`}
                         />
+                        {fieldErrors[`member_${index}_email`] && (
+                          <div className="field-error-msg">
+                            <AlertCircle size={14} />
+                            <span>{fieldErrors[`member_${index}_email`]}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="form-group">
@@ -1445,9 +1617,18 @@ export function PostPaymentDossier() {
                           type="tel"
                           required
                           value={member.phone}
-                          onChange={(e) => updateMember(index, "phone", e.target.value)}
-                          className="form-input"
+                          onChange={(e) => {
+                            clearFieldError(`member_${index}_phone`);
+                            updateMember(index, "phone", e.target.value);
+                          }}
+                          className={`form-input ${fieldErrors[`member_${index}_phone`] ? "has-error" : ""}`}
                         />
+                        {fieldErrors[`member_${index}_phone`] && (
+                          <div className="field-error-msg">
+                            <AlertCircle size={14} />
+                            <span>{fieldErrors[`member_${index}_phone`]}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1504,14 +1685,21 @@ export function PostPaymentDossier() {
                     required
                     placeholder="Nombre del individuo que controla o gestiona la entidad"
                     value={formData.ein.responsiblePartyName}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      clearFieldError("ein.responsiblePartyName");
                       setFormData((p) => ({
                         ...p,
                         ein: { ...p.ein, responsiblePartyName: e.target.value },
-                      }))
-                    }
-                    className="form-input"
+                      }));
+                    }}
+                    className={`form-input ${fieldErrors["ein.responsiblePartyName"] ? "has-error" : ""}`}
                   />
+                  {fieldErrors["ein.responsiblePartyName"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["ein.responsiblePartyName"]}</span>
+                    </div>
+                  )}
                   <p className="input-hint">
                     El IRS exige un individuo como persona responsable. Si eres extranjero sin SSN, coloca tu nombre y déjalo indicado abajo.
                   </p>
@@ -1528,14 +1716,21 @@ export function PostPaymentDossier() {
                       required
                       placeholder="SSN, ITIN o escribe 'NO POSEE / EXTRANJERO'"
                       value={formData.ein.ssnOrItin}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("ein.ssnOrItin");
                         setFormData((p) => ({
                           ...p,
                           ein: { ...p.ein, ssnOrItin: e.target.value },
-                        }))
-                      }
-                      className="form-input"
+                        }));
+                      }}
+                      className={`form-input ${fieldErrors["ein.ssnOrItin"] ? "has-error" : ""}`}
                     />
+                    {fieldErrors["ein.ssnOrItin"] && (
+                      <div className="field-error-msg">
+                        <AlertCircle size={14} />
+                        <span>{fieldErrors["ein.ssnOrItin"]}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -1548,14 +1743,21 @@ export function PostPaymentDossier() {
                       required
                       placeholder="Dirección física residencial completa"
                       value={formData.ein.responsiblePartyAddress}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("ein.responsiblePartyAddress");
                         setFormData((p) => ({
                           ...p,
                           ein: { ...p.ein, responsiblePartyAddress: e.target.value },
-                        }))
-                      }
-                      className="form-input"
+                        }));
+                      }}
+                      className={`form-input ${fieldErrors["ein.responsiblePartyAddress"] ? "has-error" : ""}`}
                     />
+                    {fieldErrors["ein.responsiblePartyAddress"] && (
+                      <div className="field-error-msg">
+                        <AlertCircle size={14} />
+                        <span>{fieldErrors["ein.responsiblePartyAddress"]}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1692,14 +1894,21 @@ export function PostPaymentDossier() {
                     required
                     placeholder="Ej. Servicios de consultoría empresarial o comercio minorista en línea"
                     value={formData.ein.irsActivity}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      clearFieldError("ein.irsActivity");
                       setFormData((p) => ({
                         ...p,
                         ein: { ...p.ein, irsActivity: e.target.value },
-                      }))
-                    }
-                    className="form-input"
+                      }));
+                    }}
+                    className={`form-input ${fieldErrors["ein.irsActivity"] ? "has-error" : ""}`}
                   />
+                  {fieldErrors["ein.irsActivity"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["ein.irsActivity"]}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -1726,17 +1935,24 @@ export function PostPaymentDossier() {
                     type="text"
                     required
                     value={formData.operatingAgreement.profitLossDistribution}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      clearFieldError("operatingAgreement.profitLossDistribution");
                       setFormData((p) => ({
                         ...p,
                         operatingAgreement: {
                           ...p.operatingAgreement,
                           profitLossDistribution: e.target.value,
                         },
-                      }))
-                    }
-                    className="form-input"
+                      }));
+                    }}
+                    className={`form-input ${fieldErrors["operatingAgreement.profitLossDistribution"] ? "has-error" : ""}`}
                   />
+                  {fieldErrors["operatingAgreement.profitLossDistribution"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["operatingAgreement.profitLossDistribution"]}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group-row">
@@ -1872,24 +2088,31 @@ export function PostPaymentDossier() {
               <div className="sub-section-box">
                 <h3 className="sub-title">F. Registered Office y Correspondencia</h3>
 
-                <label className="checkbox-item highlight-checkbox">
+                <label className={`checkbox-item highlight-checkbox ${fieldErrors["registeredOffice.confirmedService"] ? "has-error" : ""}`}>
                   <input
                     type="checkbox"
                     checked={formData.registeredOffice.confirmedService}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      clearFieldError("registeredOffice.confirmedService");
                       setFormData((p) => ({
                         ...p,
                         registeredOffice: {
                           ...p.registeredOffice,
                           confirmedService: e.target.checked,
                         },
-                      }))
-                    }
+                      }));
+                    }}
                   />
                   <span>
-                    <strong>Confirmo que utilizaré el servicio de Registered Office de CAMIKK Holdings</strong> (Primer año incluido en el paquete. La renovación posterior es voluntaria).
+                    <strong>Confirmo que utilizaré el servicio de Registered Office de CAMIKK Holdings</strong> (Primer año incluido en el paquete. La renovación posterior es voluntaria). <span className="req">*</span>
                   </span>
                 </label>
+                {fieldErrors["registeredOffice.confirmedService"] && (
+                  <div className="field-error-msg" style={{ marginTop: "8px" }}>
+                    <AlertCircle size={14} />
+                    <span>{fieldErrors["registeredOffice.confirmedService"]}</span>
+                  </div>
+                )}
 
                 <div className="form-group-row" style={{ marginTop: "20px" }}>
                   <div className="form-group">
@@ -1942,7 +2165,7 @@ export function PostPaymentDossier() {
               <div className="sub-section-box">
                 <h3 className="sub-title">G. Documentos y Verificaciones</h3>
                 <p className="sub-desc">
-                  Sube imágenes claras o PDFs de los documentos de identidad vigentes (Pasaporte, Licencia de Conducir o Cédula).
+                  Sube imágenes claras o PDFs de los documentos de identidad vigentes (Pasaporte, Licencia de Conducir o Cédula). Los documentos marcados con (*) son obligatorios para continuar.
                 </p>
 
                 <div className="upload-grid">
@@ -1950,13 +2173,14 @@ export function PostPaymentDossier() {
                   {(() => {
                     const doc = uploadedS3Docs.find((d) => d.documentType === "RESPONSIBLE_PARTY_ID");
                     const isUploading = uploadingDocType === "RESPONSIBLE_PARTY_ID";
+                    const hasError = Boolean(fieldErrors["doc_RESPONSIBLE_PARTY_ID"]);
                     return (
-                      <div className="upload-box">
+                      <div className={`upload-box ${hasError ? "has-error" : ""}`}>
                         <div className="upload-icon">
                           <Upload size={24} />
                         </div>
-                        <strong>Identificación vigente del Responsible Party *</strong>
-                        <p>Pasaporte o ID emitido por gobierno</p>
+                        <strong>Identificación vigente del Responsible Party <span className="req">*</span></strong>
+                        <p>Pasaporte o ID emitido por gobierno (Obligatorio)</p>
 
                         {isUploading ? (
                           <div style={{ padding: "10px", color: "var(--petrol)", fontSize: "13px" }}>
@@ -1994,6 +2218,13 @@ export function PostPaymentDossier() {
                             </label>
                           </>
                         )}
+
+                        {hasError && (
+                          <div className="upload-error-msg">
+                            <AlertCircle size={15} />
+                            <span>{fieldErrors["doc_RESPONSIBLE_PARTY_ID"]}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
@@ -2002,13 +2233,15 @@ export function PostPaymentDossier() {
                   {(() => {
                     const doc = uploadedS3Docs.find((d) => d.documentType === "ADDITIONAL_MEMBER_ID");
                     const isUploading = uploadingDocType === "ADDITIONAL_MEMBER_ID";
+                    const isMulti = formData.members.length > 1 || formData.structure.totalMembers > 1;
+                    const hasError = Boolean(fieldErrors["doc_ADDITIONAL_MEMBER_ID"]);
                     return (
-                      <div className="upload-box">
+                      <div className={`upload-box ${hasError ? "has-error" : ""}`}>
                         <div className="upload-icon">
                           <Upload size={24} />
                         </div>
-                        <strong>Identificación de los demás miembros</strong>
-                        <p>Requerido para sociedades con varios socios</p>
+                        <strong>Identificación de los demás miembros {isMulti ? <span className="req">*</span> : ""}</strong>
+                        <p>{isMulti ? "Obligatorio: requerido para sociedades con varios socios" : "Requerido para sociedades con varios socios"}</p>
 
                         {isUploading ? (
                           <div style={{ padding: "10px", color: "var(--petrol)", fontSize: "13px" }}>
@@ -2045,6 +2278,13 @@ export function PostPaymentDossier() {
                               {formData.documents.additionalMembersIdName || "Seleccionar archivo"}
                             </label>
                           </>
+                        )}
+
+                        {hasError && (
+                          <div className="upload-error-msg">
+                            <AlertCircle size={15} />
+                            <span>{fieldErrors["doc_ADDITIONAL_MEMBER_ID"]}</span>
+                          </div>
                         )}
                       </div>
                     );
@@ -2203,85 +2443,113 @@ export function PostPaymentDossier() {
               {/* H. Certificaciones legales */}
               <form onSubmit={handleFinalSubmit} className="certifications-form">
                 <div className="legal-checkboxes-block">
-                  <label className="checkbox-item legal-item">
+                  <label className={`checkbox-item legal-item ${fieldErrors["certifications.accurate"] ? "has-error" : ""}`}>
                     <input
                       type="checkbox"
                       required
                       checked={formData.certifications.accurate}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("certifications.accurate");
                         setFormData((p) => ({
                           ...p,
                           certifications: {
                             ...p.certifications,
                             accurate: e.target.checked,
                           },
-                        }))
-                      }
+                        }));
+                      }}
                     />
                     <span>
                       Confirmo que toda la información proporcionada es verdadera y correcta. <span className="req">*</span>
                     </span>
                   </label>
+                  {fieldErrors["certifications.accurate"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["certifications.accurate"]}</span>
+                    </div>
+                  )}
 
-                  <label className="checkbox-item legal-item">
+                  <label className={`checkbox-item legal-item ${fieldErrors["certifications.authorized"] ? "has-error" : ""}`}>
                     <input
                       type="checkbox"
                       required
                       checked={formData.certifications.authorized}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("certifications.authorized");
                         setFormData((p) => ({
                           ...p,
                           certifications: {
                             ...p.certifications,
                             authorized: e.target.checked,
                           },
-                        }))
-                      }
+                        }));
+                      }}
                     />
                     <span>
                       Autorizo a CAMIKK Holdings a utilizar esta información para preparar y presentar los documentos relacionados con el servicio contratado. <span className="req">*</span>
                     </span>
                   </label>
+                  {fieldErrors["certifications.authorized"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["certifications.authorized"]}</span>
+                    </div>
+                  )}
 
-                  <label className="checkbox-item legal-item">
+                  <label className={`checkbox-item legal-item ${fieldErrors["certifications.governmentContactNotice"] ? "has-error" : ""}`}>
                     <input
                       type="checkbox"
                       required
                       checked={formData.certifications.governmentContactNotice}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("certifications.governmentContactNotice");
                         setFormData((p) => ({
                           ...p,
                           certifications: {
                             ...p.certifications,
                             governmentContactNotice: e.target.checked,
                           },
-                        }))
-                      }
+                        }));
+                      }}
                     />
                     <span>
                       Entiendo que CAMIKK Holdings puede contactarme si falta información o si una agencia gubernamental requiere datos adicionales. <span className="req">*</span>
                     </span>
                   </label>
+                  {fieldErrors["certifications.governmentContactNotice"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["certifications.governmentContactNotice"]}</span>
+                    </div>
+                  )}
 
-                  <label className="checkbox-item legal-item">
+                  <label className={`checkbox-item legal-item ${fieldErrors["certifications.delaysNotice"] ? "has-error" : ""}`}>
                     <input
                       type="checkbox"
                       required
                       checked={formData.certifications.delaysNotice}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        clearFieldError("certifications.delaysNotice");
                         setFormData((p) => ({
                           ...p,
                           certifications: {
                             ...p.certifications,
                             delaysNotice: e.target.checked,
                           },
-                        }))
-                      }
+                        }));
+                      }}
                     />
                     <span>
                       Entiendo que proporcionar información incorrecta o incompleta puede retrasar el proceso. <span className="req">*</span>
                     </span>
                   </label>
+                  {fieldErrors["certifications.delaysNotice"] && (
+                    <div className="field-error-msg">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors["certifications.delaysNotice"]}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="signature-box">
@@ -2296,17 +2564,24 @@ export function PostPaymentDossier() {
                         required
                         placeholder="Escribe tu nombre completo como firma legal"
                         value={formData.certifications.signature}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          clearFieldError("certifications.signature");
                           setFormData((p) => ({
                             ...p,
                             certifications: {
                               ...p.certifications,
                               signature: e.target.value,
                             },
-                          }))
-                        }
-                        className="form-input form-input-signature"
+                          }));
+                        }}
+                        className={`form-input form-input-signature ${fieldErrors["certifications.signature"] ? "has-error" : ""}`}
                       />
+                      {fieldErrors["certifications.signature"] && (
+                        <div className="field-error-msg">
+                          <AlertCircle size={14} />
+                          <span>{fieldErrors["certifications.signature"]}</span>
+                        </div>
+                      )}
                       <small className="input-hint">
                         Al escribir tu nombre aquí certificas electrónicamente la veracidad del expediente con validez legal.
                       </small>
@@ -2321,14 +2596,21 @@ export function PostPaymentDossier() {
                         type="date"
                         required
                         value={formData.certifications.date}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          clearFieldError("certifications.date");
                           setFormData((p) => ({
                             ...p,
                             certifications: { ...p.certifications, date: e.target.value },
-                          }))
-                        }
-                        className="form-input"
+                          }));
+                        }}
+                        className={`form-input ${fieldErrors["certifications.date"] ? "has-error" : ""}`}
                       />
+                      {fieldErrors["certifications.date"] && (
+                        <div className="field-error-msg">
+                          <AlertCircle size={14} />
+                          <span>{fieldErrors["certifications.date"]}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

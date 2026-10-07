@@ -37,6 +37,8 @@ export default function AdminPage() {
   const [editStateFilingNumber, setEditStateFilingNumber] = useState<string>('');
   const [editAssignedEin, setEditAssignedEin] = useState<string>('');
   const [editDossierNotes, setEditDossierNotes] = useState<string>('');
+  const [editSsnOrItin, setEditSsnOrItin] = useState<string>('');
+  const [savedSsnSuccess, setSavedSsnSuccess] = useState<boolean>(false);
   const [savingDossier, setSavingDossier] = useState<boolean>(false);
   const [showSsn, setShowSsn] = useState<boolean>(false);
 
@@ -181,6 +183,8 @@ export default function AdminPage() {
     setEditStateFilingNumber(d.stateFilingNumber || '');
     setEditAssignedEin(d.assignedEin || '');
     setEditDossierNotes(d.internalNotes || '');
+    setEditSsnOrItin(d.ein?.ssnOrItin || 'No aplica');
+    setSavedSsnSuccess(false);
     setShowSsn(false);
   };
 
@@ -198,14 +202,25 @@ export default function AdminPage() {
           status: editDossierStatus,
           stateFilingNumber: editStateFilingNumber,
           assignedEin: editAssignedEin,
-          internalNotes: editDossierNotes
+          internalNotes: editDossierNotes,
+          ssnOrItin: editSsnOrItin,
+          einSsnOrItin: editSsnOrItin
         })
       });
 
       if (res.ok) {
         const updated = await res.json();
+        const updatedDossier = updated.dossier;
         setDossiers(prev =>
-          prev.map(item => item.id === selectedDossier.id ? updated.dossier : item)
+          prev.map(item => item.id === selectedDossier.id ? {
+            ...item,
+            ...(updatedDossier || {}),
+            ein: {
+              ...(item.ein || {}),
+              ...(updatedDossier?.ein || {}),
+              ssnOrItin: editSsnOrItin
+            }
+          } : item)
         );
         setSelectedDossier(null);
         fetchData();
@@ -213,6 +228,70 @@ export default function AdminPage() {
         alert('Error al actualizar el expediente de la LLC.');
       }
     } catch (err) {
+      alert('Error de conexión al guardar.');
+    } finally {
+      setSavingDossier(false);
+    }
+  };
+
+  const handleSaveSsnDirectly = async () => {
+    if (!selectedDossier) return;
+    setSavingDossier(true);
+    setSavedSsnSuccess(false);
+    try {
+      const res = await fetch(`/api/admin/llcs/${selectedDossier.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('camikk_admin_token') || ''}`
+        },
+        body: JSON.stringify({
+          status: editDossierStatus,
+          stateFilingNumber: editStateFilingNumber,
+          assignedEin: editAssignedEin,
+          internalNotes: editDossierNotes,
+          ssnOrItin: editSsnOrItin,
+          einSsnOrItin: editSsnOrItin
+        })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        const updatedDossier = updated.dossier;
+        setDossiers(prev =>
+          prev.map(item =>
+            item.id === selectedDossier.id
+              ? {
+                  ...item,
+                  ...(updatedDossier || {}),
+                  ein: {
+                    ...(item.ein || {}),
+                    ...(updatedDossier?.ein || {}),
+                    ssnOrItin: editSsnOrItin
+                  }
+                }
+              : item
+          )
+        );
+        setSelectedDossier(prev =>
+          prev
+            ? {
+                ...prev,
+                ...(updatedDossier || {}),
+                ein: {
+                  ...(prev.ein || {}),
+                  ...(updatedDossier?.ein || {}),
+                  ssnOrItin: editSsnOrItin
+                }
+              }
+            : null
+        );
+        setSavedSsnSuccess(true);
+        setTimeout(() => setSavedSsnSuccess(false), 3000);
+      } else {
+        alert('Error al actualizar el SSN / ITIN.');
+      }
+    } catch {
       alert('Error de conexión al guardar.');
     } finally {
       setSavingDossier(false);
@@ -576,267 +655,267 @@ export default function AdminPage() {
         </div>
 
         <div>
-            {/* KPI Cards for LLCs */}
-            <div className="admin-kpi-grid">
-              <div className="admin-kpi-card">
-                <div className="admin-kpi-icon blue">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="admin-kpi-val">{filteredDossiers.length}</div>
-                  <div className="admin-kpi-label">Total Expedientes</div>
-                </div>
+          {/* KPI Cards for LLCs */}
+          <div className="admin-kpi-grid">
+            <div className="admin-kpi-card">
+              <div className="admin-kpi-icon blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
               </div>
-
-              <div className="admin-kpi-card">
-                <div className="admin-kpi-icon gold" style={{ background: '#fef3c7', color: '#b45309' }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="admin-kpi-val" style={{ color: '#b45309' }}>
-                    {filteredDossiers.filter(d => normalizeDossierStatus(d.status) === 'Pago pendiente').length}
-                  </div>
-                  <div className="admin-kpi-label">Pagos Incompletos (Leads)</div>
-                </div>
-              </div>
-
-              <div className="admin-kpi-card">
-                <div className="admin-kpi-icon green">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="admin-kpi-val">
-                    {filteredDossiers.filter(d => normalizeDossierStatus(d.status) !== 'Pago pendiente').length}
-                  </div>
-                  <div className="admin-kpi-label">Pagados / En Trámite</div>
-                </div>
-              </div>
-
-              <div className="admin-kpi-card">
-                <div className="admin-kpi-icon purple">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="1" x2="12" y2="23" />
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="admin-kpi-val">
-                    ${filteredDossiers.filter(d => normalizeDossierStatus(d.status) !== 'Pago pendiente').reduce((acc, curr) => acc + (curr.totalAmount || 850), 0).toLocaleString()} USD
-                  </div>
-                  <div className="admin-kpi-label">Ingresos Confirmados</div>
-                </div>
+              <div>
+                <div className="admin-kpi-val">{filteredDossiers.length}</div>
+                <div className="admin-kpi-label">Total Expedientes</div>
               </div>
             </div>
 
-            {/* Toolbar for LLCs */}
-            <div className="admin-toolbar">
-              <div className="admin-search-wrap">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <div className="admin-kpi-card">
+              <div className="admin-kpi-icon gold" style={{ background: '#fef3c7', color: '#b45309' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
+              </div>
+              <div>
+                <div className="admin-kpi-val" style={{ color: '#b45309' }}>
+                  {filteredDossiers.filter(d => normalizeDossierStatus(d.status) === 'Pago pendiente').length}
+                </div>
+                <div className="admin-kpi-label">Pagos Incompletos (Leads)</div>
+              </div>
+            </div>
+
+            <div className="admin-kpi-card">
+              <div className="admin-kpi-icon green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <div>
+                <div className="admin-kpi-val">
+                  {filteredDossiers.filter(d => normalizeDossierStatus(d.status) !== 'Pago pendiente').length}
+                </div>
+                <div className="admin-kpi-label">Pagados / En Trámite</div>
+              </div>
+            </div>
+
+            <div className="admin-kpi-card">
+              <div className="admin-kpi-icon purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <div>
+                <div className="admin-kpi-val">
+                  ${filteredDossiers.filter(d => normalizeDossierStatus(d.status) !== 'Pago pendiente').reduce((acc, curr) => acc + (curr.totalAmount || 850), 0).toLocaleString()} USD
+                </div>
+                <div className="admin-kpi-label">Ingresos Confirmados</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Toolbar for LLCs */}
+          <div className="admin-toolbar">
+            <div className="admin-search-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Buscar por N° expediente, nombre de empresa, cliente o estado..."
+                value={dossierSearch}
+                onChange={e => setDossierSearch(e.target.value)}
+                className="admin-search-input"
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Estado:</label>
+              <select
+                value={dossierStatusFilter}
+                onChange={e => setDossierStatusFilter(e.target.value)}
+                className="admin-filter-select"
+              >
+                <option value="ALL">Todos los Estados</option>
+                {DOSSIER_STATUS_LIST.map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Estado EE.UU.:</label>
+              <select
+                value={dossierStateFilter}
+                onChange={e => setDossierStateFilter(e.target.value)}
+                className="admin-filter-select"
+              >
+                <option value="ALL">Todos</option>
+                {uniqueStates.map(st => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
+              </select>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>Desde:</label>
                 <input
-                  type="text"
-                  placeholder="Buscar por N° expediente, nombre de empresa, cliente o estado..."
-                  value={dossierSearch}
-                  onChange={e => setDossierSearch(e.target.value)}
-                  className="admin-search-input"
+                  type="date"
+                  value={dossierDateFrom}
+                  onChange={e => setDossierDateFrom(e.target.value)}
+                  className="admin-filter-select"
+                  style={{ padding: '6px 10px', fontSize: 13, cursor: 'pointer' }}
+                  title="Filtrar fecha desde"
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Estado:</label>
-                <select
-                  value={dossierStatusFilter}
-                  onChange={e => setDossierStatusFilter(e.target.value)}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>Hasta:</label>
+                <input
+                  type="date"
+                  value={dossierDateTo}
+                  onChange={e => setDossierDateTo(e.target.value)}
                   className="admin-filter-select"
-                >
-                  <option value="ALL">Todos los Estados</option>
-                  {DOSSIER_STATUS_LIST.map(st => (
-                    <option key={st} value={st}>{st}</option>
-                  ))}
-                </select>
-
-                <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>Estado EE.UU.:</label>
-                <select
-                  value={dossierStateFilter}
-                  onChange={e => setDossierStateFilter(e.target.value)}
-                  className="admin-filter-select"
-                >
-                  <option value="ALL">Todos</option>
-                  {uniqueStates.map(st => (
-                    <option key={st} value={st}>{st}</option>
-                  ))}
-                </select>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>Desde:</label>
-                  <input
-                    type="date"
-                    value={dossierDateFrom}
-                    onChange={e => setDossierDateFrom(e.target.value)}
-                    className="admin-filter-select"
-                    style={{ padding: '6px 10px', fontSize: 13, cursor: 'pointer' }}
-                    title="Filtrar fecha desde"
-                  />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>Hasta:</label>
-                  <input
-                    type="date"
-                    value={dossierDateTo}
-                    onChange={e => setDossierDateTo(e.target.value)}
-                    className="admin-filter-select"
-                    style={{ padding: '6px 10px', fontSize: 13, cursor: 'pointer' }}
-                    title="Filtrar fecha hasta"
-                  />
-                </div>
-
-                {(dossierDateFrom || dossierDateTo) && (
-                  <button
-                    onClick={() => { setDossierDateFrom(''); setDossierDateTo(''); }}
-                    className="admin-btn-sm"
-                    style={{
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      background: '#fef2f2',
-                      color: '#dc2626',
-                      borderColor: '#fca5a5'
-                    }}
-                    title="Restablecer filtro de fechas"
-                  >
-                    ✕ Limpiar fechas
-                  </button>
-                )}
+                  style={{ padding: '6px 10px', fontSize: 13, cursor: 'pointer' }}
+                  title="Filtrar fecha hasta"
+                />
               </div>
-            </div>
 
-            {/* Table of LLCs */}
-            <div className="admin-table-card">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>N° Expediente & Fecha</th>
-                    <th>Empresa Solicitada</th>
-                    <th>Cliente / Titular</th>
-                    <th>Estructura</th>
-                    <th>Registered Office</th>
-                    <th>Estado de Trámite</th>
-                    <th>Total Pagado</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDossiers.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-                        No se encontraron expedientes de LLC con los filtros especificados.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredDossiers.map(d => {
-                      const cleanPhone = d.client?.phone?.replace(/[^0-9]/g, '');
-                      return (
-                        <tr key={d.id}>
-                          <td>
-                            <div style={{ fontWeight: 800, color: '#0f172a' }}>{d.submissionNumber}</div>
-                            <div style={{ fontSize: 11, color: '#64748b' }}>
-                              {(() => {
-                                try {
-                                  const p = new Date(d.createdAt);
-                                  if (!isNaN(p.getTime())) {
-                                    return p.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-                                  }
-                                } catch {}
-                                return d.createdAt;
-                              })()}
-                            </div>
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 800, color: '#002330', fontSize: 14 }}>
-                              {d.company.name}
-                            </div>
-                            <div style={{ fontSize: 12, color: '#a44a1f', fontWeight: 700 }}>
-                              Estado: {d.company.state}
-                            </div>
-                            {d.company.secondChoice && (
-                              <div style={{ fontSize: 11, color: '#64748b' }}>
-                                2da Op: {d.company.secondChoice}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 700, color: '#0f172a' }}>{d.client.fullName}</div>
-                            <div style={{ fontSize: 12, color: '#64748b' }}>{d.client.email}</div>
-                            <div style={{ fontSize: 12, color: '#475569' }}>{d.client.phone}</div>
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 700 }}>
-                              {d.structure.totalMembers} {d.structure.totalMembers === 1 ? 'Miembro' : 'Miembros'}
-                            </div>
-                            <div style={{ fontSize: 11, color: '#64748b' }}>
-                              {d.structure.managementType}
-                            </div>
-                          </td>
-                          <td>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
-                              Allentown, PA
-                            </div>
-                            {d.autoRenewRegisteredOffice ? (
-                              <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 700 }}>
-                                ✓ Renov. Auto ($127/a)
-                              </span>
-                            ) : (
-                              <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                                Renovación Manual
-                              </span>
-                            )}
-                          </td>
-                          <td>
-                            {renderStatusBadge(d.status)}
-                          </td>
-                          <td>
-                            {normalizeDossierStatus(d.status) === 'Pago pendiente' ? (
-                              <span style={{ fontWeight: 800, color: '#d97706', fontSize: 13 }}>
-                                Pendiente (${d.totalAmount || 850}.00)
-                              </span>
-                            ) : (
-                              <span style={{ fontWeight: 800, color: '#16a34a' }}>
-                                ${d.totalAmount || 850}.00 USD
-                              </span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="admin-action-row">
-                              <button
-                                onClick={() => openDossierModal(d)}
-                                className="admin-btn-sm primary"
-                                title="Ver todo el expediente (Secciones A - H)"
-                              >
-                                Ver Expediente
-                              </button>
-                            </div>
-                          </td>
-
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+              {(dossierDateFrom || dossierDateTo) && (
+                <button
+                  onClick={() => { setDossierDateFrom(''); setDossierDateTo(''); }}
+                  className="admin-btn-sm"
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    borderColor: '#fca5a5'
+                  }}
+                  title="Restablecer filtro de fechas"
+                >
+                  ✕ Limpiar fechas
+                </button>
+              )}
             </div>
           </div>
+
+          {/* Table of LLCs */}
+          <div className="admin-table-card">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>N° Expediente & Fecha</th>
+                  <th>Empresa Solicitada</th>
+                  <th>Cliente / Titular</th>
+                  <th>Estructura</th>
+                  <th>Registered Office</th>
+                  <th>Estado de Trámite</th>
+                  <th>Total Pagado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDossiers.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                      No se encontraron expedientes de LLC con los filtros especificados.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredDossiers.map(d => {
+                    const cleanPhone = d.client?.phone?.replace(/[^0-9]/g, '');
+                    return (
+                      <tr key={d.id}>
+                        <td>
+                          <div style={{ fontWeight: 800, color: '#0f172a' }}>{d.submissionNumber}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>
+                            {(() => {
+                              try {
+                                const p = new Date(d.createdAt);
+                                if (!isNaN(p.getTime())) {
+                                  return p.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+                                }
+                              } catch { }
+                              return d.createdAt;
+                            })()}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 800, color: '#002330', fontSize: 14 }}>
+                            {d.company.name}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#a44a1f', fontWeight: 700 }}>
+                            Estado: {d.company.state}
+                          </div>
+                          {d.company.secondChoice && (
+                            <div style={{ fontSize: 11, color: '#64748b' }}>
+                              2da Op: {d.company.secondChoice}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{d.client.fullName}</div>
+                          <div style={{ fontSize: 12, color: '#64748b' }}>{d.client.email}</div>
+                          <div style={{ fontSize: 12, color: '#475569' }}>{d.client.phone}</div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700 }}>
+                            {d.structure.totalMembers} {d.structure.totalMembers === 1 ? 'Miembro' : 'Miembros'}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>
+                            {d.structure.managementType}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
+                            Allentown, PA
+                          </div>
+                          {d.autoRenewRegisteredOffice ? (
+                            <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 700 }}>
+                              ✓ Renov. Auto ($127/a)
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                              Renovación Manual
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          {renderStatusBadge(d.status)}
+                        </td>
+                        <td>
+                          {normalizeDossierStatus(d.status) === 'Pago pendiente' ? (
+                            <span style={{ fontWeight: 800, color: '#d97706', fontSize: 13 }}>
+                              Pendiente (${d.totalAmount || 850}.00)
+                            </span>
+                          ) : (
+                            <span style={{ fontWeight: 800, color: '#16a34a' }}>
+                              ${d.totalAmount || 850}.00 USD
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="admin-action-row">
+                            <button
+                              onClick={() => openDossierModal(d)}
+                              className="admin-btn-sm primary"
+                              title="Ver todo el expediente (Secciones A - H)"
+                            >
+                              Ver Expediente
+                            </button>
+                          </div>
+                        </td>
+
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </main>
 
       {/* ========================================================
@@ -863,22 +942,9 @@ export default function AdminPage() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="admin-btn-sm"
-                  title="Imprimir o guardar como PDF"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 6 2 18 2 18 9" />
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                    <rect x="6" y="14" width="12" height="8" />
-                  </svg>
-                  <span>Imprimir / PDF</span>
-                </button>
-
-                <button
                   onClick={() => setSelectedDossier(null)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                  title="Cerrar modal"
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -1220,27 +1286,53 @@ export default function AdminPage() {
                       </span>
                     </div>
 
-                    <div className="admin-kv-item">
-                      <span className="admin-kv-key">SSN / ITIN</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                        <span className="admin-kv-val" style={{ fontFamily: 'monospace' }}>
-                          {showSsn ? selectedDossier.ein.ssnOrItin : '•••-••-••••'}
-                        </span>
+                    <div className="admin-kv-item" style={{ gridColumn: 'span 1' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span className="admin-kv-key">SSN / ITIN (Editable)</span>
+                        {savedSsnSuccess && (
+                          <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 800 }}>
+                            ✓ Guardado
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input
+                          type={showSsn ? 'text' : 'password'}
+                          value={editSsnOrItin}
+                          onChange={(e) => setEditSsnOrItin(e.target.value)}
+                          placeholder="ej: 123-45-6789 o No aplica"
+                          className="admin-input-field"
+                          style={{
+                            fontFamily: editSsnOrItin === 'No aplica' ? 'inherit' : 'monospace',
+                            fontSize: 13,
+                            padding: '6px 10px',
+                            background: '#ffffff',
+                            flex: 1
+                          }}
+                        />
                         <button
                           type="button"
                           onClick={() => setShowSsn(!showSsn)}
-                          style={{
-                            background: '#f1f5f9',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: 4,
-                            padding: '2px 6px',
-                            fontSize: 10,
-                            cursor: 'pointer'
-                          }}
+                          className="admin-btn-sm"
+                          style={{ padding: '6px 10px', fontSize: 11, flexShrink: 0 }}
+                          title={showSsn ? 'Ocultar caracteres' : 'Ver caracteres'}
                         >
                           {showSsn ? 'Ocultar' : 'Ver'}
                         </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveSsnDirectly}
+                          disabled={savingDossier}
+                          className="admin-btn-sm primary"
+                          style={{ padding: '6px 12px', fontSize: 11, flexShrink: 0 }}
+                          title="Guardar este valor en el expediente"
+                        >
+                          {savingDossier ? '...' : 'Guardar'}
+                        </button>
                       </div>
+                      <span style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>
+                        Puedes modificar el valor y hacer clic en Guardar.
+                      </span>
                     </div>
 
                     <div className="admin-kv-item">

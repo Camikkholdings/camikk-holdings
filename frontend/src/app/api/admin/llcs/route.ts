@@ -26,6 +26,9 @@ export async function GET() {
               d.order?.metadata?.autoRenewRegisteredOffice === true ||
               d.order?.metadata?.autoRenewRegisteredOffice === "true" ||
               Boolean(d.order?.metadata?.stripeSubscriptionId),
+            stateFilingNumber: d.order?.metadata?.stateFilingNumber || "",
+            assignedEin: d.order?.metadata?.assignedEin || "",
+            internalNotes: d.order?.metadata?.internalNotes || "",
             client: {
               fullName: d.client?.fullName || "Cliente",
               email: d.client?.email || "",

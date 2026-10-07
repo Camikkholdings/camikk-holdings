@@ -69,7 +69,7 @@ app.listen(ENV.PORT, "0.0.0.0", async () => {
   console.log(`☁️  AWS S3: ${ENV.AWS_ACCESS_KEY_ID ? "Conectado" : "Modo Mock local"}`);
   console.log(`======================================================\n`);
 
-  if (ENV.DATABASE_URL) {
+  if (process.env.AUTO_PRISMA_DB_PUSH === "true" && ENV.DATABASE_URL) {
     try {
       const { execSync } = await import("child_process");
       console.log("🔄 Sincronizando esquema PostgreSQL (prisma db push)...");

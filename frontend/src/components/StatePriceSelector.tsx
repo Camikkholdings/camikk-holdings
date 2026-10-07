@@ -13,7 +13,7 @@ export function StatePriceSelector({ t, language }: { t: Translation; language: 
   const selection: CheckoutSelection | null = selected && stateFee !== null ? { state: selected, stateFee, serviceFee: CAMIKK_SERVICE_FEE, total: CAMIKK_SERVICE_FEE + stateFee } : null;
 
   return (
-    <section id="crear-llc" className="price-section section-space">
+    <section id="crear-llc" className="price-section section-space reveal-on-scroll">
       <div className="container price-layout">
         <div className="price-intro">
           <p className="eyebrow eyebrow-brown">{t.price.eyebrow}</p>

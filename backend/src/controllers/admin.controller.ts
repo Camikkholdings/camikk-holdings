@@ -234,12 +234,23 @@ export class AdminController {
   }
 
   /**
-   * Actualiza el estado o notas de un expediente de LLC
+   * Actualiza el estado, SSN/ITIN o notas de un expediente de LLC
    */
   async updateDossier(req: Request, res: Response) {
     try {
       const id = String(req.params.id);
-      const { status, submissionNumber, companyName } = req.body;
+      const {
+        status,
+        submissionNumber,
+        companyName,
+        einSsnOrItin,
+        ssnOrItin,
+        assignedEin,
+        stateFilingNumber,
+        internalNotes,
+      } = req.body;
+
+      const ssnValue = ssnOrItin !== undefined ? ssnOrItin : einSsnOrItin;
 
       const updated = await prisma.dossier.update({
         where: { id },
@@ -247,8 +258,31 @@ export class AdminController {
           ...(status && { status }),
           ...(submissionNumber && { submissionNumber }),
           ...(companyName && { companyName }),
+          ...(ssnValue !== undefined && { einSsnOrItin: String(ssnValue) }),
         },
       });
+
+      // Si se enviaron metadatos administrativos, sincronizarlos con la orden asociada
+      if (
+        updated.orderId &&
+        (assignedEin !== undefined || stateFilingNumber !== undefined || internalNotes !== undefined)
+      ) {
+        const order = await prisma.order.findUnique({ where: { id: updated.orderId } });
+        if (order) {
+          const currentMeta = (order.metadata as any) || {};
+          await prisma.order.update({
+            where: { id: updated.orderId },
+            data: {
+              metadata: {
+                ...currentMeta,
+                ...(assignedEin !== undefined && { assignedEin }),
+                ...(stateFilingNumber !== undefined && { stateFilingNumber }),
+                ...(internalNotes !== undefined && { internalNotes }),
+              },
+            },
+          });
+        }
+      }
 
       return res.json({ success: true, dossier: updated });
     } catch (err: any) {
