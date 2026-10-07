@@ -1496,7 +1496,7 @@ export function PostPaymentDossier() {
               <div className="form-fields-grid">
                 <div className="form-group highlight-group">
                   <label htmlFor="ein-resp-name">
-                    Nombre completo del Responsible Party <span className="req">*</span>
+                    Nombre completo del Responsable <span className="req">*</span>
                   </label>
                   <input
                     id="ein-resp-name"
@@ -1540,7 +1540,7 @@ export function PostPaymentDossier() {
 
                   <div className="form-group">
                     <label htmlFor="ein-resp-addr">
-                      Dirección del Responsible Party <span className="req">*</span>
+                      Dirección del Responsable <span className="req">*</span>
                     </label>
                     <input
                       id="ein-resp-addr"
@@ -2186,7 +2186,7 @@ export function PostPaymentDossier() {
                     <strong>{formData.members.length} propietario(s)</strong>
                   </div>
                   <div>
-                    <span>Responsible Party:</span>
+                    <span>Responsable:</span>
                     <strong>{formData.ein.responsiblePartyName || "—"}</strong>
                   </div>
                   <div>

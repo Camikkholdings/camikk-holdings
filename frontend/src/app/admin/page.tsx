@@ -244,7 +244,7 @@ export default function AdminPage() {
       case 'Información/Documentación recibida':
         return (
           <span className="admin-badge" style={{ background: '#e0e7ff', color: '#4338ca', border: '1px solid #c7d2fe' }}>
-            Info recibida
+            Informacion recibida
           </span>
         );
       case 'Documentación en revisión':
@@ -1214,7 +1214,7 @@ export default function AdminPage() {
                   <div className="admin-section-title">D. Información para el EIN / IRS</div>
                   <div className="admin-kv-grid" style={{ marginBottom: 16 }}>
                     <div className="admin-kv-item">
-                      <span className="admin-kv-key">Responsible Party</span>
+                      <span className="admin-kv-key">Responsable</span>
                       <span className="admin-kv-val" style={{ fontWeight: 800 }}>
                         {selectedDossier.ein.responsiblePartyName}
                       </span>
@@ -1244,7 +1244,7 @@ export default function AdminPage() {
                     </div>
 
                     <div className="admin-kv-item">
-                      <span className="admin-kv-key">Dirección del Responsible Party</span>
+                      <span className="admin-kv-key">Dirección del Responsable</span>
                       <span className="admin-kv-val">{selectedDossier.ein.responsiblePartyAddress}</span>
                     </div>
                     <div className="admin-kv-item">

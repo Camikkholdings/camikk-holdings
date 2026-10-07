@@ -72,6 +72,57 @@ CAMIKK Holdings.`;
   }
 
   /**
+   * Normaliza números telefónicos a formato internacional estándar E.164 (+1..., +57...)
+   * Twilio, Meta y GoHighLevel requieren obligatoriamente el prefijo internacional (+)
+   * para poder registrar contactos y entregar mensajes de WhatsApp sin ser rechazados.
+   */
+  formatE164Phone(rawPhone?: string): string {
+    if (!rawPhone) return "";
+    let cleaned = rawPhone.trim().replace(/[^\d+]/g, "");
+    if (!cleaned) return "";
+
+    // Si ya empieza con +, asegurar que solo tenga dígitos después
+    if (cleaned.startsWith("+")) {
+      return "+" + cleaned.slice(1).replace(/\D/g, "");
+    }
+
+    // Si empieza con 00 (marcado internacional estándar), reemplazar por +
+    if (cleaned.startsWith("00")) {
+      return "+" + cleaned.slice(2).replace(/\D/g, "");
+    }
+
+    // Solo dígitos
+    const digits = cleaned.replace(/\D/g, "");
+
+    // Si empieza con 57 y tiene 12 dígitos (ej: 573185655906)
+    if (digits.startsWith("57") && digits.length === 12) {
+      return "+" + digits;
+    }
+
+    // Si empieza con 1 y tiene 11 dígitos (ej: 13304491683 - USA/Canadá)
+    if (digits.startsWith("1") && digits.length === 11) {
+      return "+" + digits;
+    }
+
+    // Si es móvil de Colombia (prefijos móviles colombianos: 300-305, 310-319, 320-324, 350-351)
+    const isColombiaMobile =
+      (digits.length === 10 || digits.length === 9) &&
+      /^(30[0-5]|31\d|32[0-4]|35[0-1])/.test(digits);
+
+    if (isColombiaMobile) {
+      return "+57" + digits;
+    }
+
+    // Si tiene 10 dígitos (formato estándar norteamericano sin código de país)
+    if (digits.length === 10) {
+      return "+1" + digits;
+    }
+
+    // Caso general: anteponer +
+    return "+" + digits;
+  }
+
+  /**
    * Extrae nombre y apellido(s) para mapeo estándar en GoHighLevel / LeadConnector
    */
   private splitName(fullName: string): { firstName: string; lastName: string } {
@@ -91,6 +142,7 @@ CAMIKK Holdings.`;
   async sendLlcLead(data: GhlLlcLeadData): Promise<boolean> {
     const { firstName, lastName } = this.splitName(data.fullName);
     const isEnglish = data.language === "en";
+    const e164Phone = this.formatE164Phone(data.phone);
 
     const payload = {
       event: "llc_checkout_iniciado",
@@ -111,7 +163,12 @@ CAMIKK Holdings.`;
       name: data.fullName,
       fullName: data.fullName,
       email: data.email,
-      phone: data.phone,
+      phone: e164Phone,
+      phone_number: e164Phone,
+      telephone: e164Phone,
+      contact_phone: e164Phone,
+      mobile: e164Phone,
+      Phone: e164Phone,
 
       // Datos de la LLC
       company_name: data.companyName,
@@ -185,6 +242,7 @@ CAMIKK Holdings.`;
     const siteUrl = (data.siteUrl || ENV.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
     const dossierUrl = data.dossierUrl || (data.token ? `${siteUrl}/dossier?token=${data.token}` : "");
     const isEnglish = data.language === "en";
+    const e164Phone = this.formatE164Phone(data.phone);
 
     // Mensaje solicitado por el usuario con variables dinámicas interpoladas
     const confirmationMessage = this.buildPaymentConfirmationMessage(firstName, dossierUrl, data.language || "es");
@@ -201,7 +259,7 @@ CAMIKK Holdings.`;
       idioma_cliente: isEnglish ? "Inglés" : "Español",
       client_language: isEnglish ? "English" : "Spanish",
 
-      // Contacto estándar
+      // Contacto estándar con normalización E.164 para WhatsApp
       first_name: firstName,
       firstName,
       last_name: lastName,
@@ -209,7 +267,13 @@ CAMIKK Holdings.`;
       name: data.fullName,
       fullName: data.fullName,
       email: data.email,
-      phone: data.phone,
+      contact_email: data.email,
+      phone: e164Phone,
+      phone_number: e164Phone,
+      telephone: e164Phone,
+      contact_phone: e164Phone,
+      mobile: e164Phone,
+      Phone: e164Phone,
 
       // Datos de la LLC
       company_name: data.companyName,
@@ -270,6 +334,16 @@ CAMIKK Holdings.`;
       plantilla_mensaje: templateMessage,
       template_message: templateMessage,
 
+      // Variables y custom values para GoHighLevel
+      custom_values: {
+        llc_dossier_link: dossierUrl,
+        dossier_url: dossierUrl,
+      },
+      custom_fields: {
+        llc_dossier_link: dossierUrl,
+        dossier_url: dossierUrl,
+      },
+
       // Etiquetas para GoHighLevel
       tags: [
         "LLC Cliente",
@@ -281,7 +355,24 @@ CAMIKK Holdings.`;
       ],
     };
 
-    return this.postToWebhook(payload, "Pago Confirmado LLC");
+    // 1. Enviar al webhook principal de CRM / Leads (GHL_LLC_WEBHOOK_URL)
+    const leadWebhookSuccess = await this.postToWebhook(payload, "Pago Confirmado LLC (Lead CRM)");
+
+    // 2. Enviar al webhook específico de WhatsApp (GHL_WHATSAPP_WEBHOOK_URL)
+    // Para que los workflows de WhatsApp configurados en ese webhook se disparen inmediatamente
+    const whatsappPayload = {
+      ...payload,
+      event: "llc_pago_confirmado_whatsapp",
+      source: "CAMIKK Holdings - Stripe Checkout / Pago Confirmado WhatsApp",
+    };
+
+    const whatsappWebhookSuccess = await this.postToWebhook(
+      whatsappPayload,
+      "Pago Confirmado LLC (WhatsApp GHL)",
+      this.whatsappWebhookUrl
+    );
+
+    return leadWebhookSuccess || whatsappWebhookSuccess;
   }
 
   /**
@@ -304,6 +395,7 @@ CAMIKK Holdings.`;
     const siteUrl = (data.siteUrl || ENV.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
     const dossierUrl = `${siteUrl}/dossier?token=${data.token}`;
     const isEnglish = data.language === "en";
+    const e164Phone = this.formatE164Phone(data.phone);
 
     const payload = {
       event: "llc_documentacion_recibida",
@@ -323,7 +415,13 @@ CAMIKK Holdings.`;
       name: data.fullName,
       fullName: data.fullName,
       email: data.email,
-      phone: data.phone || "",
+      contact_email: data.email,
+      phone: e164Phone,
+      phone_number: e164Phone,
+      telephone: e164Phone,
+      contact_phone: e164Phone,
+      mobile: e164Phone,
+      Phone: e164Phone,
 
       company_name: data.companyName,
       companyName: data.companyName,
@@ -443,6 +541,7 @@ CAMIKK Holdings`,
     const clientFirstName = (firstName || (isEnglish ? "Client" : "Cliente")).trim();
     const siteUrl = (data.siteUrl || ENV.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
     const dossierUrl = `${siteUrl}/dossier?token=${data.token}`;
+    const e164Phone = this.formatE164Phone(data.phone);
 
     const whatsappMessage = isEnglish
       ? `Hello, ${clientFirstName}. We have successfully received the information and documentation for your LLC application.
@@ -487,11 +586,13 @@ CAMIKK Holdings`;
       language: isEnglish ? "en" : "es",
       idioma_cliente: isEnglish ? "Inglés" : "Español",
 
-      // Contacto obligatorio para GoHighLevel WhatsApp
-      phone: data.phone,
-      telephone: data.phone,
-      contact_phone: data.phone,
-      mobile: data.phone,
+      // Contacto obligatorio con E.164 para GoHighLevel WhatsApp
+      phone: e164Phone,
+      phone_number: e164Phone,
+      telephone: e164Phone,
+      contact_phone: e164Phone,
+      mobile: e164Phone,
+      Phone: e164Phone,
       first_name: firstName,
       firstName,
       last_name: lastName,
@@ -500,6 +601,7 @@ CAMIKK Holdings`;
       fullName: data.fullName,
       email: data.email,
       contact_email: data.email,
+      Email: data.email,
 
       // Textos del mensaje
       message: whatsappMessage,
@@ -517,6 +619,14 @@ CAMIKK Holdings`;
       submissionNumber: data.submissionNumber,
       token: data.token,
       dossier_url: dossierUrl,
+      custom_values: {
+        llc_dossier_link: dossierUrl,
+        dossier_url: dossierUrl,
+      },
+      custom_fields: {
+        llc_dossier_link: dossierUrl,
+        dossier_url: dossierUrl,
+      },
 
       // Estado
       status: "Información/Documentación recibida",
@@ -557,6 +667,7 @@ CAMIKK Holdings`;
     const { firstName, lastName } = this.splitName(data.fullName);
     const isEnglish = data.language === "en";
     const clientFirstName = (firstName || (isEnglish ? "Client" : "Cliente")).trim();
+    const e164Phone = this.formatE164Phone(data.phone);
 
     // Mensaje de WhatsApp requerido exactamente por el usuario (en inglés o español)
     const whatsappMessage = isEnglish
@@ -632,11 +743,13 @@ CAMIKK Holdings`;
       language: isEnglish ? "en" : "es",
       idioma_cliente: isEnglish ? "Inglés" : "Español",
 
-      // Contacto obligatorio para GoHighLevel WhatsApp
-      phone: data.phone,
-      telephone: data.phone,
-      contact_phone: data.phone,
-      mobile: data.phone,
+      // Contacto obligatorio con E.164 para GoHighLevel WhatsApp
+      phone: e164Phone,
+      phone_number: e164Phone,
+      telephone: e164Phone,
+      contact_phone: e164Phone,
+      mobile: e164Phone,
+      Phone: e164Phone,
       first_name: firstName,
       firstName,
       last_name: lastName,
@@ -645,6 +758,7 @@ CAMIKK Holdings`;
       fullName: data.fullName,
       email: data.email,
       contact_email: data.email,
+      Email: data.email,
 
       // Enlace de pago (disponible en custom values / variables)
       llc_payment_link: data.paymentLink,

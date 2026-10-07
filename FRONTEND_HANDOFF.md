@@ -29,7 +29,7 @@ El sistema ahora cuenta con integración completa de Stripe tanto en modo de pro
 Cumple estrictamente con las secciones A a H del documento de requerimientos:
 - **Paso 1: Compañía (Sección A)**: Datos constitutivos, actividad, descripción detallada, dirección comercial y contacto.
 - **Paso 2: Miembros y Estructura (Secciones B y C)**: Tipo de administración (Member/Manager-Managed), autoridad de firma, y generador dinámico de propietarios con cálculo de % de participación (suma 100%).
-- **Paso 3: Información para EIN / IRS (Sección D)**: Responsible Party, SSN/ITIN, empleados próximos 12 meses, salarios, mes fiscal, etc.
+- **Paso 3: Información para EIN / IRS (Sección D)**: Responsable, SSN/ITIN, empleados próximos 12 meses, salarios, mes fiscal, etc.
 - **Paso 4: Operating Agreement (Sección E)**: Distribución de ganancias/pérdidas, votación, retiro de socios y acuerdos especiales.
 - **Paso 5: Registered Office y Documentos (Secciones F y G)**: Aceptación de sede y carga de identificaciones oficiales.
 - **Paso 6: Certificaciones, Firma y Envío (Sección H)**: 4 checkboxes legales obligatorios, firma electrónica legal tipográfica y fecha.
