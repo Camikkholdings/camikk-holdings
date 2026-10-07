@@ -18,6 +18,7 @@ import {
 import { BrandLogo } from "@/components/BrandLogo";
 import { CAMIKK_SERVICE_FEE, STATE_FEES, type StateName } from "@/data/stateFees";
 import { BRAND } from "@/data/brand";
+import { PhoneInputWithCountry } from "@/components/common/PhoneInputWithCountry";
 
 const INCLUDED_BENEFITS = [
   "Registro de la LLC ante el estado",
@@ -317,16 +318,14 @@ export function LlcRegistrationPage() {
 
               <div className="form-group">
                 <label htmlFor="reg-phone">
-                  Número de teléfono <span className="req">*</span>
+                  {language === "en" ? "Phone number" : "Número de teléfono"} <span className="req">*</span>
                 </label>
-                <input
+                <PhoneInputWithCountry
                   id="reg-phone"
-                  type="tel"
-                  required
-                  placeholder="Ej. +1 (330) 449-1683"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="form-input"
+                  onChange={(val) => setPhone(val)}
+                  required
+                  language={language}
                 />
               </div>
             </div>

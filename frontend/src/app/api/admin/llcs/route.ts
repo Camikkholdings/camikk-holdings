@@ -22,7 +22,10 @@ export async function GET() {
             createdAt: d.createdAt,
             submittedAt: d.submittedAt,
             totalAmount: Number(d.order?.totalAmount) || 850,
-            autoRenewRegisteredOffice: true,
+            autoRenewRegisteredOffice:
+              d.order?.metadata?.autoRenewRegisteredOffice === true ||
+              d.order?.metadata?.autoRenewRegisteredOffice === "true" ||
+              Boolean(d.order?.metadata?.stripeSubscriptionId),
             client: {
               fullName: d.client?.fullName || "Cliente",
               email: d.client?.email || "",
