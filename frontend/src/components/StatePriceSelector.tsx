@@ -40,6 +40,7 @@ export function StatePriceSelector({ t, language }: { t: Translation; language: 
             analytics="state-selector-checkout"
             selection={selection}
             className="full-width"
+            language={language}
           />
           {process.env.NODE_ENV === "development" && <small className="dev-note">{t.price.technical}</small>}
           <p className="price-note"><Info size={16} aria-hidden="true" />{t.price.availability}</p>

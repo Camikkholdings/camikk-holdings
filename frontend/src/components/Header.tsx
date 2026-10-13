@@ -25,7 +25,7 @@ export function Header({ t, language, onLanguageChange }: { t: Translation; lang
             <span aria-hidden="true">|</span>
             <button type="button" aria-pressed={language === "en"} data-analytics="language-en-selected" onClick={() => onLanguageChange("en")}>EN</button>
           </div>
-          <CheckoutButton label={t.cta.start} analytics="llc-checkout-disabled" className="header-cta" />
+          <CheckoutButton label={t.cta.start} analytics="llc-checkout-disabled" className="header-cta" language={language} />
           <button type="button" className="menu-trigger icon-button" aria-label={menuOpen ? t.a11y.menuClose : t.a11y.menuOpen} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</button>
         </div>
       </div>

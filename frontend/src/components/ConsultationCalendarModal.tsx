@@ -79,7 +79,7 @@ export function ConsultationCalendarModal({ open, onClose, t }: Props) {
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Agendar Consulta Empresarial"
+        aria-label={t.a11y.calendar}
       >
         <button
           ref={closeRef}
@@ -96,7 +96,7 @@ export function ConsultationCalendarModal({ open, onClose, t }: Props) {
           <div className="leadconnector-loading-spinner">
             <Loader2 size={36} className="animate-spin text-petrol" style={{ animation: "spin 1s linear infinite" }} />
             <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "var(--petrol)" }}>
-              Cargando calendario de citas...
+              {t.modal.loading}
             </p>
           </div>
         )}
@@ -114,7 +114,7 @@ export function ConsultationCalendarModal({ open, onClose, t }: Props) {
           }}
           scrolling="no"
           id="hHJcb7fWgRkuEwZHMDQr_modal"
-          title="Agendar Consulta Empresarial"
+          title={t.a11y.calendar}
           onLoad={() => setIsLoading(false)}
         />
       </div>

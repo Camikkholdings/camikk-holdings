@@ -20,16 +20,174 @@ import { CAMIKK_SERVICE_FEE, STATE_FEES, type StateName } from "@/data/stateFees
 import { BRAND } from "@/data/brand";
 import { PhoneInputWithCountry } from "@/components/common/PhoneInputWithCountry";
 
-const INCLUDED_BENEFITS = [
-  "Registro de la LLC ante el estado",
-  "EIN con el IRS",
-  "Operating Agreement",
-  "Corporate Book",
-  "Sello corporativo",
-  "Certificados corporativos",
-  "Registered Office por el primer año",
-  "Acompañamiento durante el proceso",
-];
+const TXT = {
+  es: {
+    backHome: "Volver a la página principal",
+    badge: "2. RUTA — COMENZAR MI LLC",
+    title: "Datos iniciales antes del pago",
+    lead: "Ingresa la información básica de tu compañía para calcular la tarifa de radicación y proceder al pago seguro con Stripe.",
+    requiredData: "Datos Requeridos",
+    fieldsNote: "Los campos con asterisco (*) son obligatorios.",
+    fullName: "Nombre completo",
+    fullNamePlaceholder: "Ej. Juan Pérez",
+    phone: "Número de teléfono",
+    email: "Correo electrónico",
+    emailPlaceholder: "Ej. juan@tuempresa.com",
+    stateLabel: "Estado donde desea registrar la LLC",
+    stateSelectPlaceholder: "Selecciona uno de los 50 estados",
+    stateFeeSuffix: "Tarifa estatal:",
+    companyName: "Nombre deseado para la compañía",
+    companyNamePlaceholder: "Ej. Innova Solutions LLC",
+    secondName: "Segunda opción de nombre",
+    secondNamePlaceholder: "Ej. Innova Group LLC",
+    businessActivity: "Actividad principal del negocio",
+    businessActivityPlaceholder: "Ej. Comercio electrónico, consultoría en gestión, desarrollo tecnológico...",
+    ownersCount: "Cantidad de propietarios",
+    owner1: "1 propietario",
+    owner2: "2 propietarios",
+    owner3: "3 o más",
+    packageTitle: "3. Registro completo de tu LLC",
+    includedLead: "El servicio incluye:",
+    benefits: [
+      "Registro de la LLC ante el estado",
+      "EIN con el IRS",
+      "Operating Agreement",
+      "Corporate Book",
+      "Sello corporativo",
+      "Certificados corporativos",
+      "Registered Office por el primer año",
+      "Acompañamiento durante el proceso",
+    ],
+    registeredRenewalBadge: "Registered Office: primer año 100% incluido. La renovación posterior es voluntaria ($127/año opcional).",
+    priceTitle: "4. Lógica automática del precio",
+    priceFormula: "Fórmula: $725 CAMIKK Service Fee + State Filing Fee = Total a pagar hoy.",
+    serviceFee: "Servicio CAMIKK",
+    stateFeeLabel: "Tarifa estatal",
+    totalToPay: "Total a pagar hoy",
+    autoRenewActive: "✓ Renovación voluntaria activada: Se programará la renovación de Registered Office ($127 USD/año) a partir del año 2.",
+    autoRenewInactive: "○ Sin renovación automática: Solo pagarás la constitución hoy. Primer año de Registered Office incluido sin cargos recurrentes.",
+    selectStatePrompt: "Selecciona un estado en la lista para calcular el total.",
+    confirmationsTitle: "5. Confirmaciones antes del pago",
+    confirmAccurate: "Confirmo que la información proporcionada es correcta.",
+    confirmStateApproval: "Entiendo que el nombre solicitado está sujeto a disponibilidad y aprobación del estado.",
+    confirmAdditionalFees: "Entiendo que pueden existir requisitos o cargos adicionales según el estado.",
+    termsLabel: "Términos y Condiciones",
+    privacyLabel: "Política de Privacidad",
+    termsPrefix: "Acepto los",
+    termsMiddle: "y la",
+    termsSuffix: "de CAMIKK Holdings.",
+    autoRenewCheckboxTitle: "Deseo activar la renovación automática del servicio de Registered Office",
+    autoRenewBadgeActive: "Suscripción activada",
+    autoRenewBadgeOptional: "Opcional / Voluntario",
+    autoRenewDescription: "El primer año está 100% incluido en tu pago de hoy. Marca esta casilla únicamente si decides que tu servicio de Registered Office se renueve automáticamente a partir del segundo año por $127 USD anuales para mantener la sede legal de tu empresa activa. Puedes cancelar o pausar esta suscripción en cualquier momento.",
+    errorSelectState: "Por favor selecciona el estado donde deseas registrar la LLC.",
+    errorRequiredFields: "Por favor completa todos los campos obligatorios (*) antes de continuar.",
+    errorConfirmations: "Debes marcar las 4 confirmaciones obligatorias antes de proceder al pago.",
+    errorStripeConnect: "Error al conectar con Stripe.",
+    submittingStripe: "Conectando con Stripe seguro...",
+    payAndStart: (amount: string) => `Pagar ${amount} y Comenzar mi LLC`,
+    payDefault: "Pagar y Comenzar mi LLC",
+    secureStripe: "Pago seguro y encriptado con Stripe (256-bit SSL)",
+    modalSuccessTitle: "¡Pago Realizado con Éxito!",
+    modalVerifying: "Confirmando la transacción y generando tu expediente digital...",
+    modalConfirmed: "Tu orden de constitución ha sido confirmada y procesada de forma segura.",
+    modalEmailSentPrefix: "Hemos enviado un correo a",
+    modalEmailSentSuffix: "con el enlace exclusivo para completar el formulario oficial de tu LLC.",
+    modalEmailDefault: "tu correo registrado",
+    modalEmailNote: "Por favor revisa tu bandeja de entrada o spam. Puedes completar el formulario ahora o retomarlo en cualquier momento a través de tu enlace.",
+    modalCompany: "Empresa Solicitada",
+    modalState: "Estado de Radicación",
+    modalClient: "Titular / Cliente",
+    modalTotalPaid: "Total Pagado",
+    modalCopied: "¡Copiado!",
+    modalCopyLink: "Copiar enlace",
+    modalCompleteNow: "Completar Formulario Ahora",
+    modalCompleteLater: "Cerrar y completar más tarde desde el correo",
+  },
+  en: {
+    backHome: "Back to home",
+    badge: "2. ROUTE — START MY LLC",
+    title: "Initial Details Before Payment",
+    lead: "Enter your initial company information to calculate the state filing fee and proceed to secure checkout with Stripe.",
+    requiredData: "Required Information",
+    fieldsNote: "Fields marked with an asterisk (*) are required.",
+    fullName: "Full Name",
+    fullNamePlaceholder: "e.g. John Doe",
+    phone: "Phone Number",
+    email: "Email Address",
+    emailPlaceholder: "e.g. john@yourcompany.com",
+    stateLabel: "State where you want to register the LLC",
+    stateSelectPlaceholder: "Select one of the 50 states",
+    stateFeeSuffix: "State fee:",
+    companyName: "Desired Company Name",
+    companyNamePlaceholder: "e.g. Innova Solutions LLC",
+    secondName: "Second Choice Company Name",
+    secondNamePlaceholder: "e.g. Innova Group LLC",
+    businessActivity: "Primary Business Activity",
+    businessActivityPlaceholder: "e.g. E-commerce, management consulting, software development...",
+    ownersCount: "Number of Owners",
+    owner1: "1 owner",
+    owner2: "2 owners",
+    owner3: "3 or more",
+    packageTitle: "3. Complete LLC Formation Package",
+    includedLead: "The service includes:",
+    benefits: [
+      "State LLC registration",
+      "EIN from the IRS",
+      "Operating Agreement",
+      "Corporate Book",
+      "Corporate seal",
+      "Corporate certificates",
+      "Registered Office for the first year",
+      "Guidance throughout the process",
+    ],
+    registeredRenewalBadge: "Registered Office: first year 100% included. Subsequent renewal is voluntary ($127/year optional).",
+    priceTitle: "4. Automatic Price Calculation",
+    priceFormula: "Formula: $725 CAMIKK Service Fee + State Filing Fee = Total to pay today.",
+    serviceFee: "CAMIKK Service",
+    stateFeeLabel: "State Filing Fee",
+    totalToPay: "Total to pay today",
+    autoRenewActive: "✓ Voluntary renewal activated: Registered Office renewal ($127 USD/year) will be scheduled starting in year 2.",
+    autoRenewInactive: "○ No automatic renewal: You only pay formation today. First year of Registered Office included with no recurring charges.",
+    selectStatePrompt: "Select a state from the list to calculate the total.",
+    confirmationsTitle: "5. Confirmations Before Payment",
+    confirmAccurate: "I confirm that the information provided is correct.",
+    confirmStateApproval: "I understand that the requested name is subject to availability and state approval.",
+    confirmAdditionalFees: "I understand that additional requirements or fees may exist depending on the state.",
+    termsLabel: "Terms and Conditions",
+    privacyLabel: "Privacy Policy",
+    termsPrefix: "I accept the",
+    termsMiddle: "and",
+    termsSuffix: "of CAMIKK Holdings.",
+    autoRenewCheckboxTitle: "I wish to activate automatic renewal for the Registered Office service",
+    autoRenewBadgeActive: "Subscription activated",
+    autoRenewBadgeOptional: "Optional / Voluntary",
+    autoRenewDescription: "The first year is 100% included in today's payment. Check this box only if you choose to have your Registered Office service renew automatically starting in year two for $127 USD annually to keep your company's legal address active. You can cancel or pause this subscription at any time.",
+    errorSelectState: "Please select the state where you wish to register the LLC.",
+    errorRequiredFields: "Please complete all required fields (*) before continuing.",
+    errorConfirmations: "You must check all 4 required confirmations before proceeding to payment.",
+    errorStripeConnect: "Error connecting to Stripe.",
+    submittingStripe: "Connecting to secure Stripe...",
+    payAndStart: (amount: string) => `Pay ${amount} and Start My LLC`,
+    payDefault: "Pay and Start My LLC",
+    secureStripe: "Secure 256-bit SSL encrypted checkout with Stripe",
+    modalSuccessTitle: "Payment Successful!",
+    modalVerifying: "Verifying transaction and generating your digital dossier...",
+    modalConfirmed: "Your company formation order has been confirmed and securely processed.",
+    modalEmailSentPrefix: "We have sent an email to",
+    modalEmailSentSuffix: "with the exclusive link to complete your official LLC dossier.",
+    modalEmailDefault: "your registered email",
+    modalEmailNote: "Please check your inbox or spam folder. You can complete the dossier now or return at any time using your link.",
+    modalCompany: "Requested Company",
+    modalState: "Filing State",
+    modalClient: "Account Holder / Client",
+    modalTotalPaid: "Total Paid",
+    modalCopied: "Copied!",
+    modalCopyLink: "Copy link",
+    modalCompleteNow: "Complete Dossier Now",
+    modalCompleteLater: "Close and complete later via email",
+  },
+};
 
 export function LlcRegistrationPage() {
   const [selectedState, setSelectedState] = useState<StateName | "">("");
@@ -66,6 +224,8 @@ export function LlcRegistrationPage() {
   } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  const t = TXT[language];
+
   const handleLanguageChange = (next: "es" | "en") => {
     setLanguage(next);
     if (typeof window !== "undefined") {
@@ -81,7 +241,7 @@ export function LlcRegistrationPage() {
     const params = new URLSearchParams(window.location.search);
     const urlLang = params.get("lang");
     const storedLang = typeof window !== "undefined" ? window.localStorage.getItem("camikk-language") : null;
-    if (urlLang === "en" || storedLang === "en") {
+    if (urlLang === "en" || (!urlLang && storedLang === "en")) {
       setLanguage("en");
     } else {
       setLanguage("es");
@@ -107,7 +267,7 @@ export function LlcRegistrationPage() {
             setPaymentDetails({
               clientName: data.clientName || "",
               email: data.email || "",
-              companyName: data.companyName || "Tu LLC",
+              companyName: data.companyName || (language === "en" ? "Your LLC" : "Tu LLC"),
               state: data.state || "",
               totalAmount: data.totalAmount || 0,
               token: data.token || token,
@@ -121,16 +281,14 @@ export function LlcRegistrationPage() {
           setIsVerifyingPayment(false);
         });
     }
-  }, []);
+  }, [language]);
 
   const dossierLink = useMemo(() => {
     const token = paymentDetails?.token;
     if (!token) return "";
-    if (typeof window !== "undefined") {
-      return `${window.location.origin}/dossier?token=${token}`;
-    }
-    return `/dossier?token=${token}`;
-  }, [paymentDetails?.token]);
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}/dossier?token=${token}&lang=${language}`;
+  }, [paymentDetails?.token, language]);
 
   const handleCopyLink = () => {
     if (!dossierLink) return;
@@ -143,18 +301,22 @@ export function LlcRegistrationPage() {
   const handleCloseModal = () => {
     setShowSuccessModal(false);
     if (typeof window !== "undefined") {
-      window.history.replaceState({}, "", window.location.pathname);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("payment");
+      url.searchParams.delete("session_id");
+      url.searchParams.delete("token");
+      window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
     }
   };
 
   const money = useMemo(
     () =>
-      new Intl.NumberFormat("es-US", {
+      new Intl.NumberFormat(language === "en" ? "en-US" : "es-US", {
         style: "currency",
         currency: "USD",
         maximumFractionDigits: 0,
       }),
-    []
+    [language]
   );
 
   const stateFee = selectedState ? STATE_FEES[selectedState] : null;
@@ -171,15 +333,15 @@ export function LlcRegistrationPage() {
     setFormError(null);
 
     if (!selectedState) {
-      setFormError("Por favor selecciona el estado donde deseas registrar la LLC.");
+      setFormError(t.errorSelectState);
       return;
     }
     if (!fullName.trim() || !phone.trim() || !email.trim() || !companyName.trim() || !businessActivity.trim()) {
-      setFormError("Por favor completa todos los campos obligatorios (*) antes de continuar.");
+      setFormError(t.errorRequiredFields);
       return;
     }
     if (!allConfirmed) {
-      setFormError("Debes marcar las 4 confirmaciones obligatorias antes de proceder al pago.");
+      setFormError(t.errorConfirmations);
       return;
     }
 
@@ -206,14 +368,14 @@ export function LlcRegistrationPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Error al procesar el pago");
+        throw new Error(data.error || t.errorStripeConnect);
       }
 
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Error al conectar con Stripe.");
+      setFormError(err instanceof Error ? err.message : t.errorStripeConnect);
       setIsSubmitting(false);
     }
   };
@@ -223,7 +385,7 @@ export function LlcRegistrationPage() {
       {/* Header dedicado */}
       <header className="dossier-header">
         <div className="container dossier-header-inner">
-          <Link href="/" className="dossier-brand-link">
+          <Link href={language === "en" ? "/?lang=en" : "/"} className="dossier-brand-link">
             <BrandLogo />
           </Link>
           <div className="dossier-header-actions" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
@@ -275,9 +437,9 @@ export function LlcRegistrationPage() {
                 EN
               </button>
             </div>
-            <Link href="/" className="text-link" style={{ color: "white" }}>
+            <Link href={language === "en" ? "/?lang=en" : "/"} className="text-link" style={{ color: "white" }}>
               <ArrowLeft size={16} />
-              <span>{language === "en" ? "Back to home" : "Volver a la página principal"}</span>
+              <span>{t.backHome}</span>
             </Link>
           </div>
         </div>
@@ -285,31 +447,29 @@ export function LlcRegistrationPage() {
 
       <main className="container" style={{ paddingBlock: "48px 80px" }}>
         <div className="form-header-banner">
-          <span className="badge-pill">2. Ruta — Comenzar mi LLC</span>
-          <h1 className="form-heading-title">Datos iniciales antes del pago</h1>
-          <p className="lead">
-            Ingresa la información básica de tu compañía para calcular la tarifa de radicación y proceder al pago seguro con Stripe.
-          </p>
+          <span className="badge-pill">{t.badge}</span>
+          <h1 className="form-heading-title">{t.title}</h1>
+          <p className="lead">{t.lead}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="llc-form-grid">
           {/* Columna Izquierda: Datos iniciales antes del pago */}
           <div className="llc-fields-card">
             <div className="card-header-bar">
-              <span className="step-tag">Datos Requeridos</span>
-              <p className="card-note">Los campos con asterisco (*) son obligatorios.</p>
+              <span className="step-tag">{t.requiredData}</span>
+              <p className="card-note">{t.fieldsNote}</p>
             </div>
 
             <div className="form-group-row">
               <div className="form-group">
                 <label htmlFor="reg-fullname">
-                  Nombre completo <span className="req">*</span>
+                  {t.fullName} <span className="req">*</span>
                 </label>
                 <input
                   id="reg-fullname"
                   type="text"
                   required
-                  placeholder="Ej. Juan Pérez"
+                  placeholder={t.fullNamePlaceholder}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="form-input"
@@ -318,7 +478,7 @@ export function LlcRegistrationPage() {
 
               <div className="form-group">
                 <label htmlFor="reg-phone">
-                  {language === "en" ? "Phone number" : "Número de teléfono"} <span className="req">*</span>
+                  {t.phone} <span className="req">*</span>
                 </label>
                 <PhoneInputWithCountry
                   id="reg-phone"
@@ -332,13 +492,13 @@ export function LlcRegistrationPage() {
 
             <div className="form-group">
               <label htmlFor="reg-email">
-                Correo electrónico <span className="req">*</span>
+                {t.email} <span className="req">*</span>
               </label>
               <input
                 id="reg-email"
                 type="email"
                 required
-                placeholder="Ej. juan@tuempresa.com"
+                placeholder={t.emailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="form-input"
@@ -347,7 +507,7 @@ export function LlcRegistrationPage() {
 
             <div className="form-group highlight-group">
               <label htmlFor="state-select">
-                Estado donde desea registrar la LLC <span className="req">*</span>
+                {t.stateLabel} <span className="req">*</span>
               </label>
               <select
                 id="state-select"
@@ -356,10 +516,10 @@ export function LlcRegistrationPage() {
                 onChange={(e) => setSelectedState(e.target.value as StateName | "")}
                 className="form-select state-select-large"
               >
-                <option value="">Selecciona uno de los 50 estados</option>
+                <option value="">{t.stateSelectPlaceholder}</option>
                 {(Object.keys(STATE_FEES) as StateName[]).map((state) => (
                   <option key={state} value={state}>
-                    {state} — Tarifa estatal: {money.format(STATE_FEES[state])}
+                    {state} — {t.stateFeeSuffix} {money.format(STATE_FEES[state])}
                   </option>
                 ))}
               </select>
@@ -368,13 +528,13 @@ export function LlcRegistrationPage() {
             <div className="form-group-row">
               <div className="form-group">
                 <label htmlFor="reg-companyname">
-                  Nombre deseado para la compañía <span className="req">*</span>
+                  {t.companyName} <span className="req">*</span>
                 </label>
                 <input
                   id="reg-companyname"
                   type="text"
                   required
-                  placeholder="Ej. Innova Solutions LLC"
+                  placeholder={t.companyNamePlaceholder}
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   className="form-input"
@@ -382,11 +542,11 @@ export function LlcRegistrationPage() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="reg-secondname">Segunda opción de nombre</label>
+                <label htmlFor="reg-secondname">{t.secondName}</label>
                 <input
                   id="reg-secondname"
                   type="text"
-                  placeholder="Ej. Innova Group LLC"
+                  placeholder={t.secondNamePlaceholder}
                   value={secondChoiceName}
                   onChange={(e) => setSecondChoiceName(e.target.value)}
                   className="form-input"
@@ -396,13 +556,13 @@ export function LlcRegistrationPage() {
 
             <div className="form-group">
               <label htmlFor="reg-activity">
-                Actividad principal del negocio <span className="req">*</span>
+                {t.businessActivity} <span className="req">*</span>
               </label>
               <textarea
                 id="reg-activity"
                 rows={2}
                 required
-                placeholder="Ej. Comercio electrónico, consultoría en gestión, desarrollo tecnológico..."
+                placeholder={t.businessActivityPlaceholder}
                 value={businessActivity}
                 onChange={(e) => setBusinessActivity(e.target.value)}
                 className="form-textarea"
@@ -411,7 +571,7 @@ export function LlcRegistrationPage() {
 
             <div className="form-group">
               <label id="reg-owners-label">
-                Cantidad de propietarios <span className="req">*</span>
+                {t.ownersCount} <span className="req">*</span>
               </label>
               <div className="owners-toggle-group" role="radiogroup" aria-labelledby="reg-owners-label">
                 {(["1", "2", "3+"] as const).map((opt) => (
@@ -423,7 +583,7 @@ export function LlcRegistrationPage() {
                     className={`owners-toggle-btn ${ownersCount === opt ? "active" : ""}`}
                     onClick={() => setOwnersCount(opt)}
                   >
-                    {opt === "3+" ? "3 o más" : `${opt} ${opt === "1" ? "propietario" : "propietarios"}`}
+                    {opt === "1" ? t.owner1 : opt === "2" ? t.owner2 : t.owner3}
                   </button>
                 ))}
               </div>
@@ -436,13 +596,13 @@ export function LlcRegistrationPage() {
             <div className="package-preview-box">
               <div className="package-header">
                 <Sparkles size={18} className="sparkle-icon" />
-                <h3>3. Registro completo de tu LLC</h3>
+                <h3>{t.packageTitle}</h3>
               </div>
               <p style={{ fontSize: "12px", color: "var(--muted)", margin: "0 0 10px" }}>
-                El servicio incluye:
+                {t.includedLead}
               </p>
               <ul className="package-checklist">
-                {INCLUDED_BENEFITS.map((benefit) => (
+                {t.benefits.map((benefit) => (
                   <li key={benefit}>
                     <Check size={16} className="check-gold" />
                     <span>{benefit}</span>
@@ -451,33 +611,31 @@ export function LlcRegistrationPage() {
               </ul>
               <div className="registered-renewal-badge">
                 <ShieldCheck size={16} />
-                <span>Registered Office: primer año 100% incluido. La renovación posterior es voluntaria ($127/año opcional).</span>
+                <span>{t.registeredRenewalBadge}</span>
               </div>
             </div>
 
             {/* 4. Lógica automática del precio */}
             <div className="price-breakdown-box">
               <h3 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "8px" }}>
-                4. Lógica automática del precio
+                {t.priceTitle}
               </h3>
-              <p className="price-formula-lead">
-                Fórmula: $725 CAMIKK Service Fee + State Filing Fee = Total a pagar hoy.
-              </p>
+              <p className="price-formula-lead">{t.priceFormula}</p>
               <div className="price-rows">
                 <div className="price-row">
-                  <span>Servicio CAMIKK</span>
+                  <span>{t.serviceFee}</span>
                   <strong>{money.format(CAMIKK_SERVICE_FEE)}</strong>
                 </div>
                 <div className="price-row">
                   <span>
-                    Tarifa estatal {selectedState ? `(${selectedState})` : ""}
+                    {t.stateFeeLabel} {selectedState ? `(${selectedState})` : ""}
                   </span>
                   <strong>{stateFee === null ? "—" : money.format(stateFee)}</strong>
                 </div>
               </div>
 
               <div className="price-total" aria-live="polite">
-                <span>Total a pagar hoy</span>
+                <span>{t.totalToPay}</span>
                 <strong className="total-highlight">
                   {totalAmount !== null ? money.format(totalAmount) : "—"}
                 </strong>
@@ -486,23 +644,21 @@ export function LlcRegistrationPage() {
               {selectedState && (
                 <div style={{ marginTop: "14px", padding: "10px 12px", borderRadius: "8px", background: autoRenewRegisteredOffice ? "#eff6ff" : "#f8fafc", border: `1px solid ${autoRenewRegisteredOffice ? "#bfdbfe" : "#e2e8f0"}`, fontSize: "12px", color: autoRenewRegisteredOffice ? "#1e40af" : "#64748b" }}>
                   {autoRenewRegisteredOffice ? (
-                    <span>✓ <strong>Renovación voluntaria activada:</strong> Se programará la renovación de Registered Office ($127 USD/año) a partir del año 2.</span>
+                    <span>{t.autoRenewActive}</span>
                   ) : (
-                    <span>○ <strong>Sin renovación automática:</strong> Solo pagarás la constitución hoy. Primer año de Registered Office incluido sin cargos recurrentes.</span>
+                    <span>{t.autoRenewInactive}</span>
                   )}
                 </div>
               )}
 
               {!selectedState && (
-                <p className="price-empty-prompt">
-                  Selecciona un estado en la lista para calcular el total.
-                </p>
+                <p className="price-empty-prompt">{t.selectStatePrompt}</p>
               )}
             </div>
 
             {/* 5. Confirmaciones antes del pago */}
             <div className="confirmations-box">
-              <h4 className="confirmations-heading">5. Confirmaciones antes del pago</h4>
+              <h4 className="confirmations-heading">{t.confirmationsTitle}</h4>
               <div className="checkbox-list">
                 <label className="checkbox-item">
                   <input
@@ -512,7 +668,7 @@ export function LlcRegistrationPage() {
                       setConfirmations((p) => ({ ...p, accurate: e.target.checked }))
                     }
                   />
-                  <span>Confirmo que la información proporcionada es correcta.</span>
+                  <span>{t.confirmAccurate}</span>
                 </label>
 
                 <label className="checkbox-item">
@@ -523,9 +679,7 @@ export function LlcRegistrationPage() {
                       setConfirmations((p) => ({ ...p, stateApproval: e.target.checked }))
                     }
                   />
-                  <span>
-                    Entiendo que el nombre solicitado está sujeto a disponibilidad y aprobación del estado.
-                  </span>
+                  <span>{t.confirmStateApproval}</span>
                 </label>
 
                 <label className="checkbox-item">
@@ -536,9 +690,7 @@ export function LlcRegistrationPage() {
                       setConfirmations((p) => ({ ...p, additionalFees: e.target.checked }))
                     }
                   />
-                  <span>
-                    Entiendo que pueden existir requisitos o cargos adicionales según el estado.
-                  </span>
+                  <span>{t.confirmAdditionalFees}</span>
                 </label>
 
                 <label className="checkbox-item">
@@ -550,7 +702,15 @@ export function LlcRegistrationPage() {
                     }
                   />
                   <span>
-                    Acepto los <a href={BRAND.terms} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>Términos y Condiciones</a> y la <a href={BRAND.privacy} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>Política de Privacidad</a> de CAMIKK Holdings.
+                    {t.termsPrefix}{" "}
+                    <a href={BRAND.terms} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>
+                      {t.termsLabel}
+                    </a>{" "}
+                    {t.termsMiddle}{" "}
+                    <a href={BRAND.privacy} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>
+                      {t.privacyLabel}
+                    </a>{" "}
+                    {t.termsSuffix}
                   </span>
                 </label>
               </div>
@@ -566,14 +726,14 @@ export function LlcRegistrationPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       <strong style={{ fontSize: "13px", color: "var(--petrol)" }}>
-                        Deseo activar la renovación automática del servicio de Registered Office
+                        {t.autoRenewCheckboxTitle}
                       </strong>
                       <span className={`badge-optional ${autoRenewRegisteredOffice ? "selected" : ""}`}>
-                        {autoRenewRegisteredOffice ? "Suscripción activada" : "Opcional / Voluntario"}
+                        {autoRenewRegisteredOffice ? t.autoRenewBadgeActive : t.autoRenewBadgeOptional}
                       </span>
                     </div>
                     <p style={{ fontSize: "12px", color: "var(--muted)", margin: "4px 0 0", lineHeight: "1.4" }}>
-                      El primer año está <strong>100% incluido</strong> en tu pago de hoy. Marca esta casilla únicamente si decides que tu servicio de Registered Office se renueve automáticamente a partir del segundo año por <strong>$127 USD anuales</strong> para mantener la sede legal de tu empresa activa. Puedes cancelar o pausar esta suscripción en cualquier momento.
+                      {t.autoRenewDescription}
                     </p>
                   </div>
                 </label>
@@ -597,16 +757,16 @@ export function LlcRegistrationPage() {
                 <Lock size={18} />
                 <span>
                   {isSubmitting
-                    ? "Conectando con Stripe seguro..."
+                    ? t.submittingStripe
                     : totalAmount !== null
-                    ? `Pagar ${money.format(totalAmount)} y Comenzar mi LLC`
-                    : "Pagar y Comenzar mi LLC"}
+                    ? t.payAndStart(money.format(totalAmount))
+                    : t.payDefault}
                 </span>
               </button>
 
               <div className="stripe-secure-badge">
                 <ShieldCheck size={15} />
-                <span>Pago seguro y encriptado con Stripe (256-bit SSL)</span>
+                <span>{t.secureStripe}</span>
               </div>
             </div>
           </div>
@@ -631,12 +791,10 @@ export function LlcRegistrationPage() {
             </div>
 
             <h2 id="psm-modal-title" className="psm-title">
-              ¡Pago Realizado con Éxito!
+              {t.modalSuccessTitle}
             </h2>
             <p className="psm-subtitle">
-              {isVerifyingPayment
-                ? "Confirmando la transacción y generando tu expediente digital..."
-                : "Tu orden de constitución ha sido confirmada y procesada de forma segura."}
+              {isVerifyingPayment ? t.modalVerifying : t.modalConfirmed}
             </p>
 
             {/* Aviso destacado: correo electrónico con el link del formulario */}
@@ -644,14 +802,14 @@ export function LlcRegistrationPage() {
               <Mail size={24} className="psm-email-icon" />
               <div className="psm-email-text">
                 <div>
-                  Hemos enviado un correo a{" "}
+                  {t.modalEmailSentPrefix}{" "}
                   <strong className="psm-email-highlight">
-                    {paymentDetails?.email || email || "tu correo registrado"}
+                    {paymentDetails?.email || email || t.modalEmailDefault}
                   </strong>{" "}
-                  con el <strong>enlace exclusivo</strong> para completar el formulario oficial de tu LLC.
+                  {t.modalEmailSentSuffix}
                 </div>
                 <div style={{ marginTop: "6px", fontSize: "12.5px", color: "#94a3b8", lineHeight: "1.45" }}>
-                  Por favor revisa tu bandeja de entrada o spam. Puedes completar el formulario ahora o retomarlo en cualquier momento a través de tu enlace.
+                  {t.modalEmailNote}
                 </div>
               </div>
             </div>
@@ -660,19 +818,19 @@ export function LlcRegistrationPage() {
             {paymentDetails && (
               <div className="psm-summary-grid">
                 <div className="psm-summary-item">
-                  <span className="psm-summary-label">Empresa Solicitada</span>
+                  <span className="psm-summary-label">{t.modalCompany}</span>
                   <span className="psm-summary-value">{paymentDetails.companyName}</span>
                 </div>
                 <div className="psm-summary-item">
-                  <span className="psm-summary-label">Estado de Radicación</span>
+                  <span className="psm-summary-label">{t.modalState}</span>
                   <span className="psm-summary-value">{paymentDetails.state}</span>
                 </div>
                 <div className="psm-summary-item">
-                  <span className="psm-summary-label">Titular / Cliente</span>
+                  <span className="psm-summary-label">{t.modalClient}</span>
                   <span className="psm-summary-value">{paymentDetails.clientName}</span>
                 </div>
                 <div className="psm-summary-item">
-                  <span className="psm-summary-label">Total Pagado</span>
+                  <span className="psm-summary-label">{t.modalTotalPaid}</span>
                   <span className="psm-summary-value" style={{ color: "#34d399" }}>
                     {money.format(paymentDetails.totalAmount)} USD
                   </span>
@@ -690,10 +848,10 @@ export function LlcRegistrationPage() {
                   type="button"
                   className="psm-copy-btn"
                   onClick={handleCopyLink}
-                  title="Copiar enlace del formulario"
+                  title={t.modalCopyLink}
                 >
                   {linkCopied ? <Check size={14} /> : <Copy size={14} />}
-                  <span>{linkCopied ? "¡Copiado!" : "Copiar enlace"}</span>
+                  <span>{linkCopied ? t.modalCopied : t.modalCopyLink}</span>
                 </button>
               </div>
             )}
@@ -702,7 +860,7 @@ export function LlcRegistrationPage() {
             <div className="psm-actions">
               {dossierLink && (
                 <Link href={dossierLink} className="psm-primary-btn">
-                  <span>Completar Formulario Ahora</span>
+                  <span>{t.modalCompleteNow}</span>
                   <ArrowRight size={18} />
                 </Link>
               )}
@@ -711,7 +869,7 @@ export function LlcRegistrationPage() {
                 className="psm-secondary-btn"
                 onClick={handleCloseModal}
               >
-                Cerrar y completar más tarde desde el correo
+                {t.modalCompleteLater}
               </button>
             </div>
           </div>

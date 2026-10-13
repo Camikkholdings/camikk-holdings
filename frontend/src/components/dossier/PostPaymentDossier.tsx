@@ -27,6 +27,7 @@ import {
 import { BrandLogo } from "@/components/BrandLogo";
 import { STATE_FEES, type StateName } from "@/data/stateFees";
 import { BRAND } from "@/data/brand";
+import { DOSSIER_TEXT } from "./dossierLocales";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -267,6 +268,30 @@ function getInitialDossier(): DossierFormState {
 }
 
 export function PostPaymentDossier() {
+  const [language, setLanguage] = useState<"es" | "en">("es");
+  const t = DOSSIER_TEXT[language];
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get("lang");
+    const storedLang = typeof window !== "undefined" ? window.localStorage.getItem("camikk-language") : null;
+    if (urlLang === "en" || (!urlLang && storedLang === "en")) {
+      setLanguage("en");
+    } else {
+      setLanguage("es");
+    }
+  }, []);
+
+  const handleLanguageChange = (next: "es" | "en") => {
+    setLanguage(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("camikk-language", next);
+      const url = new URL(window.location.href);
+      url.searchParams.set("lang", next);
+      window.history.replaceState({}, "", url.toString());
+    }
+  };
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<DossierFormState>(getInitialDossier);
   const [savedTime, setSavedTime] = useState<string | null>(null);
@@ -553,7 +578,7 @@ export function PostPaymentDossier() {
   const handleCopyDeviceLink = () => {
     if (typeof window === "undefined") return;
     const urlToCopy = dossierToken
-      ? `${window.location.origin}/dossier?token=${dossierToken}`
+      ? `${window.location.origin}/dossier?token=${dossierToken}&lang=${language}`
       : window.location.href;
 
     if (navigator.clipboard) {
@@ -675,72 +700,72 @@ export function PostPaymentDossier() {
 
     if (step === 1) {
       if (!formData.company.state) {
-        errors["company.state"] = "Por favor selecciona el estado de registro.";
+        errors["company.state"] = t.validations.state;
       }
       if (!formData.company.name.trim()) {
-        errors["company.name"] = "El nombre de la LLC es obligatorio.";
+        errors["company.name"] = t.validations.name;
       }
       if (!formData.company.activity.trim()) {
-        errors["company.activity"] = "La actividad principal del negocio es obligatoria.";
+        errors["company.activity"] = t.validations.activity;
       }
       if (!formData.company.description.trim()) {
-        errors["company.description"] = "La descripción detallada de productos o servicios es obligatoria.";
+        errors["company.description"] = t.validations.desc;
       }
       if (!formData.company.address.trim()) {
-        errors["company.address"] = "La dirección principal del negocio es obligatoria.";
+        errors["company.address"] = t.validations.address;
       }
       if (!formData.company.cityStateZip.trim()) {
-        errors["company.cityStateZip"] = "La ciudad, estado y código postal son obligatorios.";
+        errors["company.cityStateZip"] = t.validations.cityZip;
       }
     } else if (step === 2) {
       if (!formData.structure.signingAuthority.trim()) {
-        errors["structure.signingAuthority"] = "Debes especificar quién tendrá autoridad para firmar en nombre de la LLC.";
+        errors["structure.signingAuthority"] = t.validations.signingAuthority;
       }
       for (let i = 0; i < formData.members.length; i++) {
         const m = formData.members[i];
         if (!m.fullName.trim()) {
-          errors[`member_${i}_fullName`] = "El nombre legal completo del miembro es obligatorio.";
+          errors[`member_${i}_fullName`] = t.validations.memberName;
         }
         if (!m.ownershipPercentage || m.ownershipPercentage <= 0) {
-          errors[`member_${i}_ownershipPercentage`] = "El porcentaje de propiedad debe ser mayor a 0%.";
+          errors[`member_${i}_ownershipPercentage`] = t.validations.memberPercent;
         }
         if (!m.address.trim()) {
-          errors[`member_${i}_address`] = "La dirección residencial del miembro es obligatoria.";
+          errors[`member_${i}_address`] = t.validations.memberAddress;
         }
         if (!m.cityStateZip.trim()) {
-          errors[`member_${i}_cityStateZip`] = "Ciudad, estado y código postal son obligatorios.";
+          errors[`member_${i}_cityStateZip`] = t.validations.memberCityZip;
         }
         if (!m.email.trim()) {
-          errors[`member_${i}_email`] = "El correo electrónico del miembro es obligatorio.";
+          errors[`member_${i}_email`] = t.validations.memberEmail;
         }
         if (!m.phone.trim()) {
-          errors[`member_${i}_phone`] = "El teléfono de contacto del miembro es obligatorio.";
+          errors[`member_${i}_phone`] = t.validations.memberPhone;
         }
       }
       const totalPercent = formData.members.reduce((acc, m) => acc + (Number(m.ownershipPercentage) || 0), 0);
       if (totalPercent !== 100) {
-        errors["members_totalPercent"] = `La suma de los porcentajes de propiedad debe ser exactamente 100%. Actualmente suma ${totalPercent}%.`;
+        errors["members_totalPercent"] = t.validations.totalPercent(totalPercent);
       }
     } else if (step === 3) {
       if (!formData.ein.responsiblePartyName.trim()) {
-        errors["ein.responsiblePartyName"] = "El nombre del Responsible Party es obligatorio.";
+        errors["ein.responsiblePartyName"] = t.validations.respName;
       }
       if (!formData.ein.ssnOrItin.trim()) {
-        errors["ein.ssnOrItin"] = "El SSN, ITIN o 'NO POSEE / EXTRANJERO' es obligatorio.";
+        errors["ein.ssnOrItin"] = t.validations.ssn;
       }
       if (!formData.ein.responsiblePartyAddress.trim()) {
-        errors["ein.responsiblePartyAddress"] = "La dirección física del Responsible Party es obligatoria.";
+        errors["ein.responsiblePartyAddress"] = t.validations.respAddress;
       }
       if (!formData.ein.irsActivity.trim()) {
-        errors["ein.irsActivity"] = "La actividad principal para fines del IRS es obligatoria.";
+        errors["ein.irsActivity"] = t.validations.irsActivity;
       }
     } else if (step === 4) {
       if (!formData.operatingAgreement.profitLossDistribution.trim()) {
-        errors["operatingAgreement.profitLossDistribution"] = "Indica cómo se distribuirán las ganancias y pérdidas.";
+        errors["operatingAgreement.profitLossDistribution"] = t.validations.profitLoss;
       }
     } else if (step === 5) {
       if (!formData.registeredOffice.confirmedService) {
-        errors["registeredOffice.confirmedService"] = "Debes confirmar el uso del servicio de Registered Office de CAMIKK Holdings.";
+        errors["registeredOffice.confirmedService"] = t.validations.roConfirm;
       }
 
       // VALIDACIÓN OBLIGATORIA DE SUBIDA DE DOCUMENTOS:
@@ -748,8 +773,7 @@ export function PostPaymentDossier() {
         uploadedS3Docs.some((d) => d.documentType === "RESPONSIBLE_PARTY_ID") ||
         Boolean(formData.documents.responsiblePartyIdName);
       if (!hasResponsibleId) {
-        errors["doc_RESPONSIBLE_PARTY_ID"] =
-          "Debes subir la identificación vigente del Responsible Party para poder continuar al siguiente paso.";
+        errors["doc_RESPONSIBLE_PARTY_ID"] = t.validations.docRespId;
       }
 
       const isMultiMember = formData.members.length > 1 || formData.structure.totalMembers > 1;
@@ -758,8 +782,7 @@ export function PostPaymentDossier() {
           uploadedS3Docs.some((d) => d.documentType === "ADDITIONAL_MEMBER_ID") ||
           Boolean(formData.documents.additionalMembersIdName);
         if (!hasAdditionalMemberId) {
-          errors["doc_ADDITIONAL_MEMBER_ID"] =
-            "Al haber más de un miembro, debes subir la identificación de los demás miembros para poder continuar.";
+          errors["doc_ADDITIONAL_MEMBER_ID"] = t.validations.docAddId;
         }
       }
     }
@@ -796,22 +819,22 @@ export function PostPaymentDossier() {
 
     const errors: Record<string, string> = {};
     if (!formData.certifications.accurate) {
-      errors["certifications.accurate"] = "Debes confirmar que la información es verdadera y correcta.";
+      errors["certifications.accurate"] = t.validations.certAccurate;
     }
     if (!formData.certifications.authorized) {
-      errors["certifications.authorized"] = "Debes autorizar a CAMIKK Holdings.";
+      errors["certifications.authorized"] = t.validations.certAuthorized;
     }
     if (!formData.certifications.governmentContactNotice) {
-      errors["certifications.governmentContactNotice"] = "Debes aceptar este aviso.";
+      errors["certifications.governmentContactNotice"] = t.validations.certGovNotice;
     }
     if (!formData.certifications.delaysNotice) {
-      errors["certifications.delaysNotice"] = "Debes aceptar este aviso de tiempos y retrasos.";
+      errors["certifications.delaysNotice"] = t.validations.certDelaysNotice;
     }
     if (!formData.certifications.signature.trim()) {
-      errors["certifications.signature"] = "Por favor escribe tu firma electrónica legal.";
+      errors["certifications.signature"] = t.validations.signature;
     }
     if (!formData.certifications.date.trim()) {
-      errors["certifications.date"] = "Por favor indica la fecha.";
+      errors["certifications.date"] = t.validations.date;
     }
 
     if (Object.keys(errors).length > 0) {
@@ -911,12 +934,12 @@ export function PostPaymentDossier() {
   };
 
   const stepsList = [
-    { num: 1, title: "Compañía", icon: Building2 },
-    { num: 2, title: "Miembros", icon: Users },
-    { num: 3, title: "EIN / IRS", icon: FileText },
-    { num: 4, title: "Operating Agreement", icon: FileCheck2 },
-    { num: 5, title: "Documentos", icon: Upload },
-    { num: 6, title: "Revisar y Enviar", icon: UserCheck },
+    { num: 1, title: t.stepper.steps[0].title, icon: Building2 },
+    { num: 2, title: t.stepper.steps[1].title, icon: Users },
+    { num: 3, title: t.stepper.steps[2].title, icon: FileText },
+    { num: 4, title: t.stepper.steps[3].title, icon: FileCheck2 },
+    { num: 5, title: t.stepper.steps[4].title, icon: Upload },
+    { num: 6, title: t.stepper.steps[5].title, icon: UserCheck },
   ];
 
   if (submissionSuccess) {
@@ -926,36 +949,34 @@ export function PostPaymentDossier() {
           <div className="success-icon-badge">
             <CheckCircle2 size={54} className="text-gold" />
           </div>
-          <span className="badge-pill">Expediente Recibido</span>
-          <h1>¡Expediente de LLC Completado con Éxito!</h1>
-          <p className="lead">
-            Hemos recibido toda la información y documentación requerida para la preparación de tu LLC.
-          </p>
+          <span className="badge-pill">{t.success.badge}</span>
+          <h1>{t.success.title}</h1>
+          <p className="lead">{t.success.lead}</p>
 
           <div className="submission-id-box">
-            <span>Número de Expediente:</span>
+            <span>{t.success.dossierNumber}</span>
             <strong>{submissionSuccess}</strong>
           </div>
 
           <div className="next-steps-list">
-            <h3>Próximos pasos con CAMIKK Holdings:</h3>
+            <h3>{t.success.nextStepsTitle}</h3>
             <ul>
               <li>
                 <Check size={18} />
                 <span>
-                  <strong>Revisión legal:</strong> Nuestro equipo legal verificará la disponibilidad del nombre ante la Secretaría de Estado correspondiente.
+                  <strong>{t.success.legalReview}</strong> {t.success.legalReviewDesc}
                 </span>
               </li>
               <li>
                 <Check size={18} />
                 <span>
-                  <strong>Presentación estatal:</strong> Radicamos los Artículos de Organización de tu compañía.
+                  <strong>{t.success.stateFiling}</strong> {t.success.stateFilingDesc}
                 </span>
               </li>
               <li>
                 <Check size={18} />
                 <span>
-                  <strong>Gestión de EIN y Documentos:</strong> Tramitamos tu EIN ante el IRS y estructuramos tu Operating Agreement, Corporate Book y sellos.
+                  <strong>{t.success.einAndDocs}</strong> {t.success.einAndDocsDesc}
                 </span>
               </li>
             </ul>
@@ -963,13 +984,13 @@ export function PostPaymentDossier() {
 
           <div className="success-contact-box">
             <p>
-              ¿Tienes alguna pregunta inmediata? Contáctanos a <a href={BRAND.emailHref}>{BRAND.email}</a> o al{" "}
+              {t.success.questions} <a href={BRAND.emailHref}>{BRAND.email}</a> {t.success.orAt}{" "}
               <a href={BRAND.phoneHref}>{BRAND.phone}</a>.
             </p>
           </div>
 
-          <Link href="/" className="button button-primary">
-            Volver a la Página Principal
+          <Link href={language === "en" ? "/?lang=en" : "/"} className="button button-primary">
+            {t.success.backHome}
           </Link>
         </div>
       </div>
@@ -981,19 +1002,67 @@ export function PostPaymentDossier() {
       {/* Header del Expediente */}
       <header className="dossier-header">
         <div className="container dossier-header-inner">
-          <Link href="/" className="dossier-brand-link">
+          <Link href={language === "en" ? "/?lang=en" : "/"} className="dossier-brand-link">
             <BrandLogo />
           </Link>
-          <div className="dossier-header-actions">
+          <div className="dossier-header-actions" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <div
+              className="language-switch"
+              role="group"
+              aria-label={t.header.langAria}
+              style={{
+                display: "inline-flex",
+                gap: "6px",
+                alignItems: "center",
+                background: "rgba(255, 255, 255, 0.08)",
+                padding: "4px 8px",
+                borderRadius: "6px",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+              }}
+            >
+              <button
+                type="button"
+                aria-pressed={language === "es"}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: language === "es" ? "#fff" : "rgba(255, 255, 255, 0.5)",
+                  fontWeight: language === "es" ? "700" : "400",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  padding: "0 2px",
+                }}
+                onClick={() => handleLanguageChange("es")}
+              >
+                ES
+              </button>
+              <span style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "12px" }} aria-hidden="true">|</span>
+              <button
+                type="button"
+                aria-pressed={language === "en"}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: language === "en" ? "#fff" : "rgba(255, 255, 255, 0.5)",
+                  fontWeight: language === "en" ? "700" : "400",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  padding: "0 2px",
+                }}
+                onClick={() => handleLanguageChange("en")}
+              >
+                EN
+              </button>
+            </div>
             {dossierToken && (
               <button
                 type="button"
                 onClick={handleCopyDeviceLink}
                 className="button button-device-link"
-                title="Copiar enlace de tu expediente"
+                title={t.header.copyTitle}
               >
                 {linkCopied ? <Check size={15} /> : <Smartphone size={15} />}
-                <span>{linkCopied ? "¡Enlace copiado!" : "Copiar enlace"}</span>
+                <span>{linkCopied ? t.header.linkCopied : t.header.copyLink}</span>
               </button>
             )}
           </div>
@@ -1024,7 +1093,7 @@ export function PostPaymentDossier() {
                     {isPast ? <Check size={16} /> : <Icon size={16} />}
                   </div>
                   <span className="step-label">
-                    <span className="step-num">Paso {step.num}</span>
+                    <span className="step-num">{t.stepper.stepLabel(step.num)}</span>
                     <span className="step-name">{step.title}</span>
                   </span>
                 </button>
@@ -1046,17 +1115,15 @@ export function PostPaymentDossier() {
           {currentStep === 1 && (
             <section className="step-panel" aria-labelledby="step-1-title">
               <div className="step-panel-head">
-                <span className="step-badge">Sección A</span>
-                <h2 id="step-1-title">Información de la Compañía</h2>
-                <p className="step-desc">
-                  Indica los datos constitutivos y de contacto comercial de tu nueva empresa.
-                </p>
+                <span className="step-badge">{t.step1.badge}</span>
+                <h2 id="step-1-title">{t.step1.title}</h2>
+                <p className="step-desc">{t.step1.desc}</p>
               </div>
 
               <div className="form-fields-grid">
                 <div className="form-group highlight-group">
                   <label htmlFor="company-state">
-                    Estado de registro <span className="req">*</span>
+                    {t.step1.stateLabel} <span className="req">*</span>
                   </label>
                   <select
                     id="company-state"
@@ -1071,7 +1138,7 @@ export function PostPaymentDossier() {
                     className={`form-select state-select-large ${fieldErrors["company.state"] ? "has-error" : ""}`}
                     required
                   >
-                    <option value="">Selecciona uno de los 50 estados</option>
+                    <option value="">{t.step1.statePlaceholder}</option>
                     {(Object.keys(STATE_FEES) as StateName[]).map((st) => (
                       <option key={st} value={st}>
                         {st}
@@ -1088,13 +1155,13 @@ export function PostPaymentDossier() {
 
                 <div className="form-group">
                   <label htmlFor="company-name">
-                    Nombre aprobado o solicitado de la LLC <span className="req">*</span>
+                    {t.step1.nameLabel} <span className="req">*</span>
                   </label>
                   <input
                     id="company-name"
                     type="text"
                     required
-                    placeholder="Ej. Nova Global Logistics LLC"
+                    placeholder={t.step1.namePlaceholder}
                     value={formData.company.name}
                     onChange={(e) => {
                       clearFieldError("company.name");
@@ -1115,11 +1182,11 @@ export function PostPaymentDossier() {
 
                 <div className="form-group-row">
                   <div className="form-group">
-                    <label htmlFor="company-second-choice">Segunda opción de nombre</label>
+                    <label htmlFor="company-second-choice">{t.step1.secondChoiceLabel}</label>
                     <input
                       id="company-second-choice"
                       type="text"
-                      placeholder="Ej. Nova Logistics Group LLC"
+                      placeholder={t.step1.secondChoicePlaceholder}
                       value={formData.company.secondChoice}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -1132,11 +1199,11 @@ export function PostPaymentDossier() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="company-third-choice">Tercera opción de nombre</label>
+                    <label htmlFor="company-third-choice">{t.step1.thirdChoiceLabel}</label>
                     <input
                       id="company-third-choice"
                       type="text"
-                      placeholder="Ej. Nova Express Solutions LLC"
+                      placeholder={t.step1.thirdChoicePlaceholder}
                       value={formData.company.thirdChoice}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -1151,7 +1218,7 @@ export function PostPaymentDossier() {
 
                 <div className="form-group-row">
                   <div className="form-group">
-                    <label htmlFor="company-start-date">Fecha deseada de inicio (si aplica)</label>
+                    <label htmlFor="company-start-date">{t.step1.startDateLabel}</label>
                     <input
                       id="company-start-date"
                       type="date"
@@ -1168,13 +1235,13 @@ export function PostPaymentDossier() {
 
                   <div className="form-group">
                     <label htmlFor="company-activity">
-                      Actividad principal del negocio <span className="req">*</span>
+                      {t.step1.activityLabel} <span className="req">*</span>
                     </label>
                     <input
                       id="company-activity"
                       type="text"
                       required
-                      placeholder="Ej. Consultoría financiera y de negocios"
+                      placeholder={t.step1.activityPlaceholder}
                       value={formData.company.activity}
                       onChange={(e) => {
                         clearFieldError("company.activity");
@@ -1196,13 +1263,13 @@ export function PostPaymentDossier() {
 
                 <div className="form-group">
                   <label htmlFor="company-desc">
-                    Descripción detallada de los productos o servicios <span className="req">*</span>
+                    {t.step1.descriptionLabel} <span className="req">*</span>
                   </label>
                   <textarea
                     id="company-desc"
                     rows={3}
                     required
-                    placeholder="Describe detalladamente qué comercializa o prestará tu empresa, a qué tipo de clientes y en qué canales..."
+                    placeholder={t.step1.descriptionPlaceholder}
                     value={formData.company.description}
                     onChange={(e) => {
                       clearFieldError("company.description");
@@ -1224,13 +1291,13 @@ export function PostPaymentDossier() {
                 <div className="form-group-row">
                   <div className="form-group">
                     <label htmlFor="company-address">
-                      Dirección principal del negocio <span className="req">*</span>
+                      {t.step1.addressLabel} <span className="req">*</span>
                     </label>
                     <input
                       id="company-address"
                       type="text"
                       required
-                      placeholder="Ej. 101 Hamilton St. Suite 351"
+                      placeholder={t.step1.addressPlaceholder}
                       value={formData.company.address}
                       onChange={(e) => {
                         clearFieldError("company.address");
@@ -1251,13 +1318,13 @@ export function PostPaymentDossier() {
 
                   <div className="form-group">
                     <label htmlFor="company-city-zip">
-                      Ciudad / Estado / ZIP <span className="req">*</span>
+                      {t.step1.cityZipLabel} <span className="req">*</span>
                     </label>
                     <input
                       id="company-city-zip"
                       type="text"
                       required
-                      placeholder="Ej. Allentown, PA 18101"
+                      placeholder={t.step1.cityZipPlaceholder}
                       value={formData.company.cityStateZip}
                       onChange={(e) => {
                         clearFieldError("company.cityStateZip");
@@ -1279,11 +1346,11 @@ export function PostPaymentDossier() {
 
                 <div className="form-group-row">
                   <div className="form-group">
-                    <label htmlFor="company-phone">Teléfono del negocio</label>
+                    <label htmlFor="company-phone">{t.step1.phoneLabel}</label>
                     <input
                       id="company-phone"
                       type="tel"
-                      placeholder="Ej. +1 (330) 449-1683"
+                      placeholder={t.step1.phonePlaceholder}
                       value={formData.company.phone}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -1296,11 +1363,11 @@ export function PostPaymentDossier() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="company-email">Email del negocio</label>
+                    <label htmlFor="company-email">{t.step1.emailLabel}</label>
                     <input
                       id="company-email"
                       type="email"
-                      placeholder="Ej. contacto@tuempresa.com"
+                      placeholder={t.step1.emailPlaceholder}
                       value={formData.company.email}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -1313,11 +1380,11 @@ export function PostPaymentDossier() {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="company-website">Sitio web (si ya existe)</label>
+                    <label htmlFor="company-website">{t.step1.websiteLabel}</label>
                     <input
                       id="company-website"
                       type="url"
-                      placeholder="Ej. https://tuempresa.com"
+                      placeholder={t.step1.websitePlaceholder}
                       value={formData.company.website}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -1337,21 +1404,19 @@ export function PostPaymentDossier() {
           {currentStep === 2 && (
             <section className="step-panel" aria-labelledby="step-2-title">
               <div className="step-panel-head">
-                <span className="step-badge">Secciones B y C</span>
-                <h2 id="step-2-title">Estructura, Administración y Miembros</h2>
-                <p className="step-desc">
-                  Define la administración y añade la información detallada de cada socio o propietario.
-                </p>
+                <span className="step-badge">{t.step2.badge}</span>
+                <h2 id="step-2-title">{t.step2.title}</h2>
+                <p className="step-desc">{t.step2.desc}</p>
               </div>
 
               {/* B. Estructura y administración */}
               <div className="sub-section-box">
-                <h3 className="sub-title">B. Estructura y Administración</h3>
+                <h3 className="sub-title">{t.step2.sectionBTitle}</h3>
 
                 <div className="form-group-row">
                   <div className="form-group">
                     <label htmlFor="mgmt-type">
-                      ¿La LLC será Member-Managed o Manager-Managed? <span className="req">*</span>
+                      {t.step2.mgmtTypeLabel} <span className="req">*</span>
                     </label>
                     <select
                       id="mgmt-type"
@@ -1367,20 +1432,20 @@ export function PostPaymentDossier() {
                       }
                       className="form-select"
                     >
-                      <option value="Member-Managed">Member-Managed (Administrada por los Propietarios)</option>
-                      <option value="Manager-Managed">Manager-Managed (Administrada por Gerentes designados)</option>
+                      <option value="Member-Managed">{t.step2.mgmtTypeMember}</option>
+                      <option value="Manager-Managed">{t.step2.mgmtTypeManager}</option>
                     </select>
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="signing-auth">
-                      ¿Quién tendrá autoridad para firmar en nombre de la LLC? <span className="req">*</span>
+                      {t.step2.signingAuthLabel} <span className="req">*</span>
                     </label>
                     <input
                       id="signing-auth"
                       type="text"
                       required
-                      placeholder="Ej. Nombre del miembro principal o todos los miembros"
+                      placeholder={t.step2.signingAuthPlaceholder}
                       value={formData.structure.signingAuthority}
                       onChange={(e) => {
                         clearFieldError("structure.signingAuthority");
@@ -1402,7 +1467,7 @@ export function PostPaymentDossier() {
 
                 <div className="form-group-row">
                   <div className="form-group">
-                    <label htmlFor="non-owner-managers">¿Habrá managers que no sean propietarios?</label>
+                    <label htmlFor="non-owner-managers">{t.step2.hasNonOwnerManagersLabel}</label>
                     <select
                       id="non-owner-managers"
                       value={formData.structure.hasNonOwnerManagers}
@@ -1417,18 +1482,18 @@ export function PostPaymentDossier() {
                       }
                       className="form-select"
                     >
-                      <option value="No">No</option>
-                      <option value="Si">Sí</option>
+                      <option value="No">{t.step2.no}</option>
+                      <option value="Si">{t.step2.yes}</option>
                     </select>
                   </div>
 
                   {formData.structure.hasNonOwnerManagers === "Si" && (
                     <div className="form-group">
-                      <label htmlFor="manager-names">Nombre completo de cada manager</label>
+                      <label htmlFor="manager-names">{t.step2.managerNamesLabel}</label>
                       <input
                         id="manager-names"
                         type="text"
-                        placeholder="Ej. Pedro Gómez, María Morales"
+                        placeholder={t.step2.managerNamesPlaceholder}
                         value={formData.structure.managerNames}
                         onChange={(e) =>
                           setFormData((p) => ({
@@ -1447,14 +1512,12 @@ export function PostPaymentDossier() {
               <div className="sub-section-box">
                 <div className="sub-section-header">
                   <div>
-                    <h3 className="sub-title">C. Información de cada Miembro / Propietario</h3>
-                    <p className="sub-desc">
-                      Total de miembros configurados: {formData.members.length}. La suma de participación debe ser 100%.
-                    </p>
+                    <h3 className="sub-title">{t.step2.sectionCTitle}</h3>
+                    <p className="sub-desc">{t.step2.membersCountInfo(formData.members.length)}</p>
                   </div>
                   <button type="button" onClick={handleAddMember} className="button button-add-member">
                     <Plus size={16} />
-                    <span>Agregar Miembro</span>
+                    <span>{t.step2.addMember}</span>
                   </button>
                 </div>
 
@@ -1468,16 +1531,16 @@ export function PostPaymentDossier() {
                 {formData.members.map((member, index) => (
                   <div key={member.id} className="member-card">
                     <div className="member-card-top">
-                      <span className="member-badge">Miembro #{index + 1}</span>
+                      <span className="member-badge">{t.step2.memberBadge(index + 1)}</span>
                       {formData.members.length > 1 && (
                         <button
                           type="button"
                           onClick={() => handleRemoveMember(index)}
                           className="member-delete-btn"
-                          aria-label={`Eliminar miembro ${index + 1}`}
+                          aria-label={t.step2.deleteAria(index + 1)}
                         >
                           <Trash2 size={16} />
-                          <span>Eliminar</span>
+                          <span>{t.step2.deleteMember}</span>
                         </button>
                       )}
                     </div>
@@ -1485,13 +1548,13 @@ export function PostPaymentDossier() {
                     <div className="form-group-row">
                       <div className="form-group">
                         <label htmlFor={`m-name-${index}`}>
-                          Nombre legal completo <span className="req">*</span>
+                          {t.step2.fullNameLabel} <span className="req">*</span>
                         </label>
                         <input
                           id={`m-name-${index}`}
                           type="text"
                           required
-                          placeholder="Tal como figura en el pasaporte o ID"
+                          placeholder={t.step2.fullNamePlaceholder}
                           value={member.fullName}
                           onChange={(e) => {
                             clearFieldError(`member_${index}_fullName`);
@@ -1509,7 +1572,7 @@ export function PostPaymentDossier() {
 
                       <div className="form-group">
                         <label htmlFor={`m-percent-${index}`}>
-                          Porcentaje de propiedad (%) <span className="req">*</span>
+                          {t.step2.ownershipLabel} <span className="req">*</span>
                         </label>
                         <input
                           id={`m-percent-${index}`}
@@ -1537,13 +1600,13 @@ export function PostPaymentDossier() {
                     <div className="form-group-row">
                       <div className="form-group">
                         <label htmlFor={`m-addr-${index}`}>
-                          Dirección residencial <span className="req">*</span>
+                          {t.step2.residentialAddressLabel} <span className="req">*</span>
                         </label>
                         <input
                           id={`m-addr-${index}`}
                           type="text"
                           required
-                          placeholder="Calle, número, depto / apto"
+                          placeholder={t.step2.residentialAddressPlaceholder}
                           value={member.address}
                           onChange={(e) => {
                             clearFieldError(`member_${index}_address`);
@@ -1561,13 +1624,13 @@ export function PostPaymentDossier() {
 
                       <div className="form-group">
                         <label htmlFor={`m-city-${index}`}>
-                          Ciudad / Estado / ZIP <span className="req">*</span>
+                          {t.step2.cityZipLabel} <span className="req">*</span>
                         </label>
                         <input
                           id={`m-city-${index}`}
                           type="text"
                           required
-                          placeholder="Ciudad, Provincia o Estado, Código Postal"
+                          placeholder={t.step2.cityZipPlaceholder}
                           value={member.cityStateZip}
                           onChange={(e) => {
                             clearFieldError(`member_${index}_cityStateZip`);
@@ -1587,7 +1650,7 @@ export function PostPaymentDossier() {
                     <div className="form-group-row">
                       <div className="form-group">
                         <label htmlFor={`m-email-${index}`}>
-                          Correo electrónico <span className="req">*</span>
+                          {t.step2.emailLabel} <span className="req">*</span>
                         </label>
                         <input
                           id={`m-email-${index}`}
@@ -1610,7 +1673,7 @@ export function PostPaymentDossier() {
 
                       <div className="form-group">
                         <label htmlFor={`m-phone-${index}`}>
-                          Teléfono <span className="req">*</span>
+                          {t.step2.phoneLabel} <span className="req">*</span>
                         </label>
                         <input
                           id={`m-phone-${index}`}
@@ -1634,11 +1697,11 @@ export function PostPaymentDossier() {
 
                     <div className="form-group-row">
                       <div className="form-group">
-                        <label htmlFor={`m-capital-${index}`}>Capital inicial aportado (si aplica)</label>
+                        <label htmlFor={`m-capital-${index}`}>{t.step2.capitalLabel}</label>
                         <input
                           id={`m-capital-${index}`}
                           type="text"
-                          placeholder="Ej. USD 1,000"
+                          placeholder={t.step2.capitalPlaceholder}
                           value={member.initialCapital}
                           onChange={(e) => updateMember(index, "initialCapital", e.target.value)}
                           className="form-input"
@@ -1646,11 +1709,11 @@ export function PostPaymentDossier() {
                       </div>
 
                       <div className="form-group">
-                        <label htmlFor={`m-role-${index}`}>Cargo o función dentro de la compañía</label>
+                        <label htmlFor={`m-role-${index}`}>{t.step2.roleLabel}</label>
                         <input
                           id={`m-role-${index}`}
                           type="text"
-                          placeholder="Ej. Presidente, Director de Operaciones"
+                          placeholder={t.step2.rolePlaceholder}
                           value={member.roleOrTitle}
                           onChange={(e) => updateMember(index, "roleOrTitle", e.target.value)}
                           className="form-input"
@@ -1667,23 +1730,21 @@ export function PostPaymentDossier() {
           {currentStep === 3 && (
             <section className="step-panel" aria-labelledby="step-3-title">
               <div className="step-panel-head">
-                <span className="step-badge">Sección D</span>
-                <h2 id="step-3-title">Información para el EIN / IRS</h2>
-                <p className="step-desc">
-                  Datos requeridos por el Servicio de Impuestos Internos (IRS) para la emisión del Número de Identificación Patronal (EIN).
-                </p>
+                <span className="step-badge">{t.step3.badge}</span>
+                <h2 id="step-3-title">{t.step3.title}</h2>
+                <p className="step-desc">{t.step3.desc}</p>
               </div>
 
               <div className="form-fields-grid">
                 <div className="form-group highlight-group">
                   <label htmlFor="ein-resp-name">
-                    Nombre completo del Responsable <span className="req">*</span>
+                    {t.step3.respNameLabel} <span className="req">*</span>
                   </label>
                   <input
                     id="ein-resp-name"
                     type="text"
                     required
-                    placeholder="Nombre del individuo que controla o gestiona la entidad"
+                    placeholder={t.step3.respNamePlaceholder}
                     value={formData.ein.responsiblePartyName}
                     onChange={(e) => {
                       clearFieldError("ein.responsiblePartyName");
@@ -1700,21 +1761,19 @@ export function PostPaymentDossier() {
                       <span>{fieldErrors["ein.responsiblePartyName"]}</span>
                     </div>
                   )}
-                  <p className="input-hint">
-                    El IRS exige un individuo como persona responsable. Si eres extranjero sin SSN, coloca tu nombre y déjalo indicado abajo.
-                  </p>
+                  <p className="input-hint">{t.step3.respNameHint}</p>
                 </div>
 
                 <div className="form-group-row">
                   <div className="form-group">
                     <label htmlFor="ein-ssn-itin">
-                      SSN o ITIN del Responsible Party <span className="req">*</span>
+                      {t.step3.ssnItinLabel} <span className="req">*</span>
                     </label>
                     <input
                       id="ein-ssn-itin"
                       type="text"
                       required
-                      placeholder="SSN, ITIN o escribe 'NO POSEE / EXTRANJERO'"
+                      placeholder={t.step3.ssnItinPlaceholder}
                       value={formData.ein.ssnOrItin}
                       onChange={(e) => {
                         clearFieldError("ein.ssnOrItin");
@@ -1735,13 +1794,13 @@ export function PostPaymentDossier() {
 
                   <div className="form-group">
                     <label htmlFor="ein-resp-addr">
-                      Dirección del Responsable <span className="req">*</span>
+                      {t.step3.respAddressLabel} <span className="req">*</span>
                     </label>
                     <input
                       id="ein-resp-addr"
                       type="text"
                       required
-                      placeholder="Dirección física residencial completa"
+                      placeholder={t.step3.respAddressPlaceholder}
                       value={formData.ein.responsiblePartyAddress}
                       onChange={(e) => {
                         clearFieldError("ein.responsiblePartyAddress");
@@ -1763,9 +1822,7 @@ export function PostPaymentDossier() {
 
                 <div className="form-group-row">
                   <div className="form-group">
-                    <label htmlFor="ein-has-employees">
-                      ¿La LLC espera tener empleados en los próximos 12 meses?
-                    </label>
+                    <label htmlFor="ein-has-employees">{t.step3.hasEmployeesLabel}</label>
                     <select
                       id="ein-has-employees"
                       value={formData.ein.hasEmployeesNext12Months}
@@ -1780,19 +1837,19 @@ export function PostPaymentDossier() {
                       }
                       className="form-select"
                     >
-                      <option value="No">No</option>
-                      <option value="Si">Sí</option>
+                      <option value="No">{t.step2.no}</option>
+                      <option value="Si">{t.step2.yes}</option>
                     </select>
                   </div>
 
                   {formData.ein.hasEmployeesNext12Months === "Si" && (
                     <>
                       <div className="form-group">
-                        <label htmlFor="ein-emp-count">Número estimado de empleados</label>
+                        <label htmlFor="ein-emp-count">{t.step3.employeeCountLabel}</label>
                         <input
                           id="ein-emp-count"
                           type="number"
-                          placeholder="Ej. 2"
+                          placeholder={t.step3.employeeCountPlaceholder}
                           value={formData.ein.estimatedEmployeesCount}
                           onChange={(e) =>
                             setFormData((p) => ({
@@ -1805,7 +1862,7 @@ export function PostPaymentDossier() {
                       </div>
 
                       <div className="form-group">
-                        <label htmlFor="ein-wage-date">Fecha en que comenzará a pagar salarios</label>
+                        <label htmlFor="ein-wage-date">{t.step3.wageDateLabel}</label>
                         <input
                           id="ein-wage-date"
                           type="date"
@@ -1826,7 +1883,7 @@ export function PostPaymentDossier() {
                 <div className="form-group-row">
                   <div className="form-group">
                     <label htmlFor="ein-fiscal-month">
-                      Mes de cierre del año fiscal (por defecto diciembre) <span className="req">*</span>
+                      {t.step3.fiscalMonthLabel} <span className="req">*</span>
                     </label>
                     <select
                       id="ein-fiscal-month"
@@ -1839,21 +1896,8 @@ export function PostPaymentDossier() {
                       }
                       className="form-select"
                     >
-                      {[
-                        "Diciembre",
-                        "Enero",
-                        "Febrero",
-                        "Marzo",
-                        "Abril",
-                        "Mayo",
-                        "Junio",
-                        "Julio",
-                        "Agosto",
-                        "Septiembre",
-                        "Octubre",
-                        "Noviembre",
-                      ].map((m) => (
-                        <option key={m} value={m}>
+                      {t.step3.fiscalMonths.map((m, idx) => (
+                        <option key={m} value={DOSSIER_TEXT.es.step3.fiscalMonths[idx]}>
                           {m}
                         </option>
                       ))}
@@ -1862,7 +1906,7 @@ export function PostPaymentDossier() {
 
                   <div className="form-group">
                     <label htmlFor="ein-applied-before">
-                      ¿Ha solicitado anteriormente un EIN para esta entidad? <span className="req">*</span>
+                      {t.step3.previouslyAppliedLabel} <span className="req">*</span>
                     </label>
                     <select
                       id="ein-applied-before"
@@ -1878,21 +1922,21 @@ export function PostPaymentDossier() {
                       }
                       className="form-select"
                     >
-                      <option value="No">No</option>
-                      <option value="Si">Sí</option>
+                      <option value="No">{t.step2.no}</option>
+                      <option value="Si">{t.step2.yes}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="ein-irs-act">
-                    Actividad principal para fines del IRS <span className="req">*</span>
+                    {t.step3.irsActivityLabel} <span className="req">*</span>
                   </label>
                   <input
                     id="ein-irs-act"
                     type="text"
                     required
-                    placeholder="Ej. Servicios de consultoría empresarial o comercio minorista en línea"
+                    placeholder={t.step3.irsActivityPlaceholder}
                     value={formData.ein.irsActivity}
                     onChange={(e) => {
                       clearFieldError("ein.irsActivity");
@@ -1918,17 +1962,15 @@ export function PostPaymentDossier() {
           {currentStep === 4 && (
             <section className="step-panel" aria-labelledby="step-4-title">
               <div className="step-panel-head">
-                <span className="step-badge">Sección E</span>
-                <h2 id="step-4-title">Operating Agreement (Acuerdo Operativo)</h2>
-                <p className="step-desc">
-                  Reglas internas de gobernanza, toma de decisiones y distribución de beneficios de la LLC.
-                </p>
+                <span className="step-badge">{t.step4.badge}</span>
+                <h2 id="step-4-title">{t.step4.title}</h2>
+                <p className="step-desc">{t.step4.desc}</p>
               </div>
 
               <div className="form-fields-grid">
                 <div className="form-group">
                   <label htmlFor="oa-distribution">
-                    ¿Cómo se distribuirán ganancias y pérdidas? <span className="req">*</span>
+                    {t.step4.distributionLabel} <span className="req">*</span>
                   </label>
                   <input
                     id="oa-distribution"
@@ -1958,7 +2000,7 @@ export function PostPaymentDossier() {
                 <div className="form-group-row">
                   <div className="form-group">
                     <label htmlFor="oa-proportional">
-                      ¿La distribución será proporcional al porcentaje de propiedad? <span className="req">*</span>
+                      {t.step4.proportionalLabel} <span className="req">*</span>
                     </label>
                     <select
                       id="oa-proportional"
@@ -1974,18 +2016,18 @@ export function PostPaymentDossier() {
                       }
                       className="form-select"
                     >
-                      <option value="Si">Sí</option>
-                      <option value="No">No</option>
+                      <option value="Si">{t.step2.yes}</option>
+                      <option value="No">{t.step2.no}</option>
                     </select>
                   </div>
 
                   {formData.operatingAgreement.isDistributionProportional === "No" && (
                     <div className="form-group">
-                      <label htmlFor="oa-dist-explain">Explicar la distribución acordada</label>
+                      <label htmlFor="oa-dist-explain">{t.step4.distExplainLabel}</label>
                       <input
                         id="oa-dist-explain"
                         type="text"
-                        placeholder="Ej. 60% socio A, 40% socio B independientemente del capital"
+                        placeholder={t.step4.distExplainPlaceholder}
                         value={formData.operatingAgreement.agreedDistributionExplanation}
                         onChange={(e) =>
                           setFormData((p) => ({
@@ -2004,7 +2046,7 @@ export function PostPaymentDossier() {
 
                 <div className="form-group">
                   <label htmlFor="oa-decisions">
-                    ¿Cómo se tomarán las decisiones importantes? <span className="req">*</span>
+                    {t.step4.decisionsLabel} <span className="req">*</span>
                   </label>
                   <select
                     id="oa-decisions"
@@ -2020,20 +2062,20 @@ export function PostPaymentDossier() {
                     }
                     className="form-select"
                   >
-                    <option value="Mayoría">Mayoría de votos (más del 50%)</option>
-                    <option value="Unanimidad">Unanimidad (100% de los votos)</option>
-                    <option value="Otro">Otro criterio especial</option>
+                    <option value="Mayoría">{t.step4.decisionsMajority}</option>
+                    <option value="Unanimidad">{t.step4.decisionsUnanimity}</option>
+                    <option value="Otro">{t.step4.decisionsOther}</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="oa-withdrawal">
-                    ¿Qué sucederá si un miembro desea retirarse o vender su participación?
+                    {t.step4.withdrawalLabel}
                   </label>
                   <textarea
                     id="oa-withdrawal"
                     rows={3}
-                    placeholder="Ej. Los miembros restantes tienen derecho preferente de compra durante 30 días..."
+                    placeholder={t.step4.withdrawalPlaceholder}
                     value={formData.operatingAgreement.memberWithdrawalTerms}
                     onChange={(e) =>
                       setFormData((p) => ({
@@ -2050,12 +2092,12 @@ export function PostPaymentDossier() {
 
                 <div className="form-group">
                   <label htmlFor="oa-special">
-                    ¿Hay acuerdos especiales entre los miembros que deban incluirse?
+                    {t.step4.specialAgreementsLabel}
                   </label>
                   <textarea
                     id="oa-special"
                     rows={2}
-                    placeholder="Cualquier cláusula adicional o acuerdo específico entre socios..."
+                    placeholder={t.step4.specialAgreementsPlaceholder}
                     value={formData.operatingAgreement.specialAgreements}
                     onChange={(e) =>
                       setFormData((p) => ({
@@ -2077,16 +2119,14 @@ export function PostPaymentDossier() {
           {currentStep === 5 && (
             <section className="step-panel" aria-labelledby="step-5-title">
               <div className="step-panel-head">
-                <span className="step-badge">Secciones F y G</span>
-                <h2 id="step-5-title">Registered Office y Subida de Documentos</h2>
-                <p className="step-desc">
-                  Confirma el servicio de sede registrada y adjunta las identificaciones requeridas.
-                </p>
+                <span className="step-badge">{t.step5.badge}</span>
+                <h2 id="step-5-title">{t.step5.title}</h2>
+                <p className="step-desc">{t.step5.desc}</p>
               </div>
 
               {/* F. Registered Office y correspondencia */}
               <div className="sub-section-box">
-                <h3 className="sub-title">F. Registered Office y Correspondencia</h3>
+                <h3 className="sub-title">{t.step5.sectionFTitle}</h3>
 
                 <label className={`checkbox-item highlight-checkbox ${fieldErrors["registeredOffice.confirmedService"] ? "has-error" : ""}`}>
                   <input
@@ -2104,7 +2144,7 @@ export function PostPaymentDossier() {
                     }}
                   />
                   <span>
-                    <strong>Confirmo que utilizaré el servicio de Registered Office de CAMIKK Holdings</strong> (Primer año incluido en el paquete. La renovación posterior es voluntaria). <span className="req">*</span>
+                    <strong>{t.step5.roConfirmLabel}</strong> {t.step5.roConfirmDetail} <span className="req">*</span>
                   </span>
                 </label>
                 {fieldErrors["registeredOffice.confirmedService"] && (
@@ -2117,12 +2157,12 @@ export function PostPaymentDossier() {
                 <div className="form-group-row" style={{ marginTop: "20px" }}>
                   <div className="form-group">
                     <label htmlFor="reg-mail-addr">
-                      Dirección postal preferida para recibir correspondencia de la compañía
+                      {t.step5.roAddressLabel}
                     </label>
                     <input
                       id="reg-mail-addr"
                       type="text"
-                      placeholder="Dirección física o postal de tu preferencia"
+                      placeholder={t.step5.roAddressPlaceholder}
                       value={formData.registeredOffice.preferredMailingAddress}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -2139,12 +2179,12 @@ export function PostPaymentDossier() {
 
                   <div className="form-group">
                     <label htmlFor="reg-contact-person">
-                      Persona de contacto principal para avisos y documentos
+                      {t.step5.roContactLabel}
                     </label>
                     <input
                       id="reg-contact-person"
                       type="text"
-                      placeholder="Nombre de la persona autorizada para recibir notificaciones"
+                      placeholder={t.step5.roContactPlaceholder}
                       value={formData.registeredOffice.primaryContactPerson}
                       onChange={(e) =>
                         setFormData((p) => ({
@@ -2163,10 +2203,8 @@ export function PostPaymentDossier() {
 
               {/* G. Documentos y verificaciones */}
               <div className="sub-section-box">
-                <h3 className="sub-title">G. Documentos y Verificaciones</h3>
-                <p className="sub-desc">
-                  Sube imágenes claras o PDFs de los documentos de identidad vigentes (Pasaporte, Licencia de Conducir o Cédula). Los documentos marcados con (*) son obligatorios para continuar.
-                </p>
+                <h3 className="sub-title">{t.step5.sectionGTitle}</h3>
+                <p className="sub-desc">{t.step5.sectionGDesc}</p>
 
                 <div className="upload-grid">
                   {/* Documento 1: Responsible Party */}
@@ -2179,13 +2217,13 @@ export function PostPaymentDossier() {
                         <div className="upload-icon">
                           <Upload size={24} />
                         </div>
-                        <strong>Identificación vigente del Responsible Party <span className="req">*</span></strong>
-                        <p>Pasaporte o ID emitido por gobierno (Obligatorio)</p>
+                        <strong>{t.step5.doc1Title} <span className="req">*</span></strong>
+                        <p>{t.step5.doc1Desc}</p>
 
                         {isUploading ? (
                           <div style={{ padding: "10px", color: "var(--petrol)", fontSize: "13px" }}>
                             <LoaderCircle className="spinner" size={18} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "6px" }} />
-                            <span>Subiendo documento...</span>
+                            <span>{t.step5.uploading}</span>
                           </div>
                         ) : doc ? (
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px", width: "100%" }}>
@@ -2194,10 +2232,10 @@ export function PostPaymentDossier() {
                             </span>
                             <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                               <a href={doc.viewUrl || doc.s3Url} target="_blank" rel="noopener noreferrer" className="button button-ghost" style={{ fontSize: "12px", padding: "4px 8px" }}>
-                                <ExternalLink size={14} /> Ver documento
+                                <ExternalLink size={14} /> {t.step5.viewDoc}
                               </a>
                               <button type="button" onClick={() => handleDeleteFile(doc.id, "responsiblePartyIdName")} className="button button-ghost" style={{ fontSize: "12px", color: "#b91c1c", padding: "4px 8px" }}>
-                                <Trash2 size={14} /> Eliminar
+                                <Trash2 size={14} /> {t.step5.deleteDoc}
                               </button>
                             </div>
                           </div>
@@ -2214,7 +2252,7 @@ export function PostPaymentDossier() {
                               }}
                             />
                             <label htmlFor="upload-resp-id" className="upload-browse-btn">
-                              {formData.documents.responsiblePartyIdName || "Seleccionar archivo"}
+                              {formData.documents.responsiblePartyIdName || t.step5.selectFile}
                             </label>
                           </>
                         )}
@@ -2240,13 +2278,13 @@ export function PostPaymentDossier() {
                         <div className="upload-icon">
                           <Upload size={24} />
                         </div>
-                        <strong>Identificación de los demás miembros {isMulti ? <span className="req">*</span> : ""}</strong>
-                        <p>{isMulti ? "Obligatorio: requerido para sociedades con varios socios" : "Requerido para sociedades con varios socios"}</p>
+                        <strong>{t.step5.doc2Title} {isMulti ? <span className="req">*</span> : ""}</strong>
+                        <p>{isMulti ? t.step5.doc2DescMulti : t.step5.doc2DescSingle}</p>
 
                         {isUploading ? (
                           <div style={{ padding: "10px", color: "var(--petrol)", fontSize: "13px" }}>
                             <LoaderCircle className="spinner" size={18} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "6px" }} />
-                            <span>Subiendo documento...</span>
+                            <span>{t.step5.uploading}</span>
                           </div>
                         ) : doc ? (
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px", width: "100%" }}>
@@ -2255,10 +2293,10 @@ export function PostPaymentDossier() {
                             </span>
                             <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                               <a href={doc.viewUrl || doc.s3Url} target="_blank" rel="noopener noreferrer" className="button button-ghost" style={{ fontSize: "12px", padding: "4px 8px" }}>
-                                <ExternalLink size={14} /> Ver documento
+                                <ExternalLink size={14} /> {t.step5.viewDoc}
                               </a>
                               <button type="button" onClick={() => handleDeleteFile(doc.id, "additionalMembersIdName")} className="button button-ghost" style={{ fontSize: "12px", color: "#b91c1c", padding: "4px 8px" }}>
-                                <Trash2 size={14} /> Eliminar
+                                <Trash2 size={14} /> {t.step5.deleteDoc}
                               </button>
                             </div>
                           </div>
@@ -2275,7 +2313,7 @@ export function PostPaymentDossier() {
                               }}
                             />
                             <label htmlFor="upload-members-id" className="upload-browse-btn">
-                              {formData.documents.additionalMembersIdName || "Seleccionar archivo"}
+                              {formData.documents.additionalMembersIdName || t.step5.selectFile}
                             </label>
                           </>
                         )}
@@ -2299,13 +2337,13 @@ export function PostPaymentDossier() {
                         <div className="upload-icon">
                           <Upload size={24} />
                         </div>
-                        <strong>Documentos de entidad relacionada</strong>
-                        <p>Si el miembro es otra empresa o holding</p>
+                        <strong>{t.step5.doc3Title}</strong>
+                        <p>{t.step5.doc3Desc}</p>
 
                         {isUploading ? (
                           <div style={{ padding: "10px", color: "var(--petrol)", fontSize: "13px" }}>
                             <LoaderCircle className="spinner" size={18} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "6px" }} />
-                            <span>Subiendo documento...</span>
+                            <span>{t.step5.uploading}</span>
                           </div>
                         ) : doc ? (
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px", width: "100%" }}>
@@ -2314,10 +2352,10 @@ export function PostPaymentDossier() {
                             </span>
                             <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                               <a href={doc.viewUrl || doc.s3Url} target="_blank" rel="noopener noreferrer" className="button button-ghost" style={{ fontSize: "12px", padding: "4px 8px" }}>
-                                <ExternalLink size={14} /> Ver documento
+                                <ExternalLink size={14} /> {t.step5.viewDoc}
                               </a>
                               <button type="button" onClick={() => handleDeleteFile(doc.id, "relatedEntityDocsName")} className="button button-ghost" style={{ fontSize: "12px", color: "#b91c1c", padding: "4px 8px" }}>
-                                <Trash2 size={14} /> Eliminar
+                                <Trash2 size={14} /> {t.step5.deleteDoc}
                               </button>
                             </div>
                           </div>
@@ -2334,7 +2372,7 @@ export function PostPaymentDossier() {
                               }}
                             />
                             <label htmlFor="upload-entity-doc" className="upload-browse-btn">
-                              {formData.documents.relatedEntityDocsName || "Seleccionar archivo"}
+                              {formData.documents.relatedEntityDocsName || t.step5.selectFile}
                             </label>
                           </>
                         )}
@@ -2351,13 +2389,13 @@ export function PostPaymentDossier() {
                         <div className="upload-icon">
                           <Upload size={24} />
                         </div>
-                        <strong>Documento o instrucción adicional</strong>
-                        <p>Opcional (cualquier detalle relevante)</p>
+                        <strong>{t.step5.doc4Title}</strong>
+                        <p>{t.step5.doc4Desc}</p>
 
                         {isUploading ? (
                           <div style={{ padding: "10px", color: "var(--petrol)", fontSize: "13px" }}>
                             <LoaderCircle className="spinner" size={18} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "6px" }} />
-                            <span>Subiendo documento...</span>
+                            <span>{t.step5.uploading}</span>
                           </div>
                         ) : doc ? (
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px", width: "100%" }}>
@@ -2366,10 +2404,10 @@ export function PostPaymentDossier() {
                             </span>
                             <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                               <a href={doc.viewUrl || doc.s3Url} target="_blank" rel="noopener noreferrer" className="button button-ghost" style={{ fontSize: "12px", padding: "4px 8px" }}>
-                                <ExternalLink size={14} /> Ver documento
+                                <ExternalLink size={14} /> {t.step5.viewDoc}
                               </a>
                               <button type="button" onClick={() => handleDeleteFile(doc.id, "additionalDocsName")} className="button button-ghost" style={{ fontSize: "12px", color: "#b91c1c", padding: "4px 8px" }}>
-                                <Trash2 size={14} /> Eliminar
+                                <Trash2 size={14} /> {t.step5.deleteDoc}
                               </button>
                             </div>
                           </div>
@@ -2386,7 +2424,7 @@ export function PostPaymentDossier() {
                               }}
                             />
                             <label htmlFor="upload-extra-doc" className="upload-browse-btn">
-                              {formData.documents.additionalDocsName || "Seleccionar archivo"}
+                              {formData.documents.additionalDocsName || t.step5.selectFile}
                             </label>
                           </>
                         )}
@@ -2399,43 +2437,44 @@ export function PostPaymentDossier() {
           )}
 
           {/* PASO 6: H. Certificaciones Finales y Revisión */}
+          {/* PASO 6: H. Certificaciones Finales y Revisión */}
           {currentStep === 6 && (
             <section className="step-panel" aria-labelledby="step-6-title">
               <div className="step-panel-head">
-                <span className="step-badge">Sección H</span>
-                <h2 id="step-6-title">Certificaciones Finales y Firma Electrónica</h2>
+                <span className="step-badge">{t.step6.badge}</span>
+                <h2 id="step-6-title">{t.step6.title}</h2>
                 <p className="step-desc">
-                  Revisa el resumen de tu expediente y completa las certificaciones legales obligatorias para radicar tu LLC.
+                  {t.step6.desc}
                 </p>
               </div>
 
               {/* Resumen sintético */}
               <div className="dossier-summary-card">
-                <h3>Resumen del Expediente:</h3>
+                <h3>{t.step6.summaryTitle}</h3>
                 <div className="summary-data-grid">
                   <div>
-                    <span>Compañía solicitada:</span>
+                    <span>{t.step6.summaryCompany}</span>
                     <strong>{formData.company.name || "—"}</strong>
                   </div>
                   <div>
-                    <span>Estado de registro:</span>
+                    <span>{t.step6.summaryState}</span>
                     <strong>{formData.company.state || "—"}</strong>
                   </div>
                   <div>
-                    <span>Total miembros:</span>
-                    <strong>{formData.members.length} propietario(s)</strong>
+                    <span>{t.step6.summaryMembers}</span>
+                    <strong>{t.step6.summaryMembersCount(formData.members.length)}</strong>
                   </div>
                   <div>
-                    <span>Responsable:</span>
+                    <span>{t.step6.summaryResponsible}</span>
                     <strong>{formData.ein.responsiblePartyName || "—"}</strong>
                   </div>
                   <div>
-                    <span>Administración:</span>
+                    <span>{t.step6.summaryManagement}</span>
                     <strong>{formData.structure.managementType}</strong>
                   </div>
                   <div>
-                    <span>Registered Office:</span>
-                    <strong>CAMIKK Holdings (1 año incluido)</strong>
+                    <span>{t.step6.summaryRegisteredOffice}</span>
+                    <strong>{t.step6.summaryRoVal}</strong>
                   </div>
                 </div>
               </div>
@@ -2460,7 +2499,7 @@ export function PostPaymentDossier() {
                       }}
                     />
                     <span>
-                      Confirmo que toda la información proporcionada es verdadera y correcta. <span className="req">*</span>
+                      {t.step6.certAccurate} <span className="req">*</span>
                     </span>
                   </label>
                   {fieldErrors["certifications.accurate"] && (
@@ -2487,7 +2526,7 @@ export function PostPaymentDossier() {
                       }}
                     />
                     <span>
-                      Autorizo a CAMIKK Holdings a utilizar esta información para preparar y presentar los documentos relacionados con el servicio contratado. <span className="req">*</span>
+                      {t.step6.certAuthorized} <span className="req">*</span>
                     </span>
                   </label>
                   {fieldErrors["certifications.authorized"] && (
@@ -2514,7 +2553,7 @@ export function PostPaymentDossier() {
                       }}
                     />
                     <span>
-                      Entiendo que CAMIKK Holdings puede contactarme si falta información o si una agencia gubernamental requiere datos adicionales. <span className="req">*</span>
+                      {t.step6.certGovNotice} <span className="req">*</span>
                     </span>
                   </label>
                   {fieldErrors["certifications.governmentContactNotice"] && (
@@ -2541,7 +2580,7 @@ export function PostPaymentDossier() {
                       }}
                     />
                     <span>
-                      Entiendo que proporcionar información incorrecta o incompleta puede retrasar el proceso. <span className="req">*</span>
+                      {t.step6.certDelaysNotice} <span className="req">*</span>
                     </span>
                   </label>
                   {fieldErrors["certifications.delaysNotice"] && (
@@ -2556,13 +2595,13 @@ export function PostPaymentDossier() {
                   <div className="form-group-row">
                     <div className="form-group" style={{ flex: "2" }}>
                       <label htmlFor="final-signature">
-                        Firma electrónica del solicitante <span className="req">*</span>
+                        {t.step6.signatureLabel} <span className="req">*</span>
                       </label>
                       <input
                         id="final-signature"
                         type="text"
                         required
-                        placeholder="Escribe tu nombre completo como firma legal"
+                        placeholder={t.step6.signaturePlaceholder}
                         value={formData.certifications.signature}
                         onChange={(e) => {
                           clearFieldError("certifications.signature");
@@ -2583,13 +2622,13 @@ export function PostPaymentDossier() {
                         </div>
                       )}
                       <small className="input-hint">
-                        Al escribir tu nombre aquí certificas electrónicamente la veracidad del expediente con validez legal.
+                        {t.step6.signatureHint}
                       </small>
                     </div>
 
                     <div className="form-group" style={{ flex: "1" }}>
                       <label htmlFor="final-date">
-                        Fecha <span className="req">*</span>
+                        {t.step6.dateLabel} <span className="req">*</span>
                       </label>
                       <input
                         id="final-date"
@@ -2624,12 +2663,12 @@ export function PostPaymentDossier() {
                     {isSubmitting ? (
                       <>
                         <LoaderCircle className="spinner" size={20} />
-                        <span>Enviando expediente...</span>
+                        <span>{t.step6.submittingBtn}</span>
                       </>
                     ) : (
                       <>
                         <Check size={20} />
-                        <span>ENVIAR INFORMACION Y CONTINUAR CON MI REGISTRO</span>
+                        <span>{t.step6.submitBtn}</span>
                       </>
                     )}
                   </button>
@@ -2644,7 +2683,7 @@ export function PostPaymentDossier() {
               {currentStep > 1 && (
                 <button type="button" onClick={handlePrevStep} className="button button-secondary btn-wizard-prev">
                   <ArrowLeft size={16} />
-                  <span>Paso Anterior</span>
+                  <span>{t.footer.prev}</span>
                 </button>
               )}
             </div>
@@ -2652,7 +2691,7 @@ export function PostPaymentDossier() {
             <div className="footer-right-actions">
               {currentStep < 6 && (
                 <button type="button" onClick={handleNextStep} className="button button-primary btn-wizard-next">
-                  <span>Siguiente Paso</span>
+                  <span>{t.footer.next}</span>
                   <ArrowRight size={16} />
                 </button>
               )}

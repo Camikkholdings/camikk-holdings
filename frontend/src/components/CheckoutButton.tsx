@@ -18,6 +18,7 @@ type Props = {
   selection?: CheckoutSelection | null;
   onCheckout?: (selection: CheckoutSelection) => void;
   disabled?: boolean;
+  language?: "es" | "en";
 };
 
 export function CheckoutButton({
@@ -27,6 +28,7 @@ export function CheckoutButton({
   selection,
   onCheckout,
   disabled = false,
+  language,
 }: Props) {
   const router = useRouter();
 
@@ -36,9 +38,23 @@ export function CheckoutButton({
       onCheckout(selection);
       return;
     }
-    const targetUrl = selection?.state
-      ? `/comenzar-llc?state=${encodeURIComponent(selection.state)}`
-      : "/comenzar-llc";
+    const activeLang =
+      language ||
+      (typeof window !== "undefined"
+        ? (new URLSearchParams(window.location.search).get("lang") as "es" | "en") ||
+          (window.localStorage.getItem("camikk-language") as "es" | "en")
+        : null) ||
+      "es";
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("camikk-language", activeLang);
+    }
+
+    const params = new URLSearchParams();
+    if (selection?.state) params.set("state", selection.state);
+    if (activeLang) params.set("lang", activeLang);
+
+    const targetUrl = `/comenzar-llc?${params.toString()}`;
     router.push(targetUrl);
   };
 

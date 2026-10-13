@@ -38,6 +38,7 @@ export type ConsultationCheckoutPayload = {
   scheduledDate?: string;
   timeSlot?: string;
   timeZone?: string;
+  language?: "es" | "en";
 };
 
 export async function createLlcCheckoutSession(
@@ -50,6 +51,7 @@ export async function createLlcCheckoutSession(
   }
 
   const totalAmount = CAMIKK_SERVICE_FEE + stateFee;
+  const lang = payload.language || "es";
 
   // Si no hay Stripe Secret Key configurada, operamos en modo DEMO/SIMULACIÓN seguro para pruebas
   if (!stripe) {
@@ -66,6 +68,7 @@ export async function createLlcCheckoutSession(
     if (payload.secondChoiceName) {
       returnUrl.searchParams.set("second_choice", payload.secondChoiceName);
     }
+    returnUrl.searchParams.set("lang", lang);
     returnUrl.searchParams.set("is_demo", "true");
 
     return {
@@ -118,18 +121,18 @@ export async function createLlcCheckoutSession(
       businessActivity: payload.businessActivity,
       ownersCount: payload.ownersCount,
       autoRenewRegisteredOffice: payload.autoRenewRegisteredOffice ? "true" : "false",
-      language: payload.language || "es",
+      language: lang,
       siteUrl: payload.siteUrl || siteUrl,
       totalPaid: totalAmount.toString(),
       stateFee: stateFee.toString(),
       serviceFee: CAMIKK_SERVICE_FEE.toString(),
     },
-    success_url: `${siteUrl}/dossier?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}/#comenzar-llc`,
+    success_url: `${siteUrl}/dossier?session_id={CHECKOUT_SESSION_ID}&lang=${lang}`,
+    cancel_url: `${siteUrl}/comenzar-llc?state=${encodeURIComponent(payload.state)}&lang=${lang}`,
   });
 
   return {
-    url: session.url || `${siteUrl}/dossier?session_id=${session.id}`,
+    url: session.url || `${siteUrl}/dossier?session_id=${session.id}&lang=${lang}`,
     sessionId: session.id,
   };
 }
@@ -139,6 +142,7 @@ export async function createConsultationCheckoutSession(
   siteUrl: string
 ): Promise<{ url: string; sessionId: string; isMock?: boolean }> {
   const CONSULTATION_FEE = 50;
+  const lang = payload.language || "es";
 
   if (!stripe) {
     const mockSessionId = `mock_consult_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -151,6 +155,7 @@ export async function createConsultationCheckoutSession(
     if (payload.scheduledDate) returnUrl.searchParams.set("scheduledDate", payload.scheduledDate);
     if (payload.timeSlot) returnUrl.searchParams.set("timeSlot", payload.timeSlot);
     if (payload.timeZone) returnUrl.searchParams.set("timeZone", payload.timeZone);
+    returnUrl.searchParams.set("lang", lang);
     returnUrl.searchParams.set("is_demo", "true");
 
     return {
@@ -193,13 +198,14 @@ export async function createConsultationCheckoutSession(
       timeZone: "America/New_York",
       currency: "usd",
       fee: CONSULTATION_FEE.toString(),
+      language: lang,
     },
-    success_url: `${siteUrl}/consulta-confirmada?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}/consulta`,
+    success_url: `${siteUrl}/consulta-confirmada?session_id={CHECKOUT_SESSION_ID}&lang=${lang}`,
+    cancel_url: `${siteUrl}/consulta?lang=${lang}`,
   });
 
   return {
-    url: session.url || `${siteUrl}/consulta-confirmada?session_id=${session.id}`,
+    url: session.url || `${siteUrl}/consulta-confirmada?session_id=${session.id}&lang=${lang}`,
     sessionId: session.id,
   };
 }

@@ -14,7 +14,7 @@ function ConsultButton({ children, onClick, analytics, className = "" }: { child
   return <button type="button" className={`button button-secondary ${className}`} onClick={onClick} data-analytics={analytics} data-calendar-action="consultation-calendar-open"><span>{children}</span><ArrowUpRight size={18} aria-hidden="true" /></button>;
 }
 
-export function Hero({ t, onConsult }: Props) {
+export function Hero({ t, language, onConsult }: Props) {
   return <section className="hero" id="top">
     <Image className="hero-photo" src="/images/camikk-hero-bg.png" alt="" fill priority sizes="100vw" />
     <div className="hero-shade" />
@@ -26,7 +26,7 @@ export function Hero({ t, onConsult }: Props) {
         <p className="hero-description">{t.hero.description}</p>
         <p className="hero-price">{t.hero.price}</p>
         <div className="hero-buttons">
-          <CheckoutButton label={t.cta.start} analytics="hero-start-llc" />
+          <CheckoutButton label={t.cta.start} analytics="hero-start-llc" language={language} />
           <ConsultButton onClick={onConsult} analytics="hero-book-consultation" className="hero-consult">{t.cta.questions}</ConsultButton>
         </div>
         <p className="hero-microcopy">{t.hero.microcopy}</p>
@@ -41,12 +41,12 @@ export function TrustMetrics({ t }: Props) {
   return <section className="trust-strip reveal-on-scroll"><div className="container trust-grid">{t.metrics.map((metric, index) => <div className="trust-item" key={metric}><strong>{numbers[index]}</strong><span>{metric}</span></div>)}</div></section>;
 }
 
-export function DecisionPaths({ t, onConsult }: Props) {
+export function DecisionPaths({ t, language, onConsult }: Props) {
   return <section className="paths-section section-space reveal-on-scroll"><div className="container">
     <div className="section-topline"><span className="section-index">01 / 05</span><span className="section-rule" /></div>
     <h2 className="paths-heading">{t.paths.title}</h2>
     <div className="paths-grid">
-      <div className="path-card path-primary"><div className="path-icon"><MoveUpRight size={28} strokeWidth={1.4} aria-hidden="true" /></div><p className="eyebrow">{t.paths.first.eyebrow}</p><h3>{t.paths.first.title}</h3><p>{t.paths.first.body}</p><CheckoutButton label={t.cta.start} analytics="decision-start-llc" /></div>
+      <div className="path-card path-primary"><div className="path-icon"><MoveUpRight size={28} strokeWidth={1.4} aria-hidden="true" /></div><p className="eyebrow">{t.paths.first.eyebrow}</p><h3>{t.paths.first.title}</h3><p>{t.paths.first.body}</p><CheckoutButton label={t.cta.start} analytics="decision-start-llc" language={language} /></div>
       <div className="path-card path-secondary"><div className="path-icon"><Headphones size={27} strokeWidth={1.5} aria-hidden="true" /></div><p className="eyebrow eyebrow-brown">{t.paths.second.eyebrow}</p><h3>{t.paths.second.title}</h3><p>{t.paths.second.body}</p><div className="path-bottom"><strong>USD 50 · 45 min</strong><ConsultButton onClick={onConsult} analytics="decision-book-consultation">{t.cta.consult}</ConsultButton></div></div>
     </div>
   </div></section>;
@@ -86,15 +86,15 @@ export function FaqAccordion({ t, onConsult }: Props) {
   return <section className="faq-section section-space reveal-on-scroll" id="preguntas"><div className="container faq-layout"><div className="faq-intro"><p className="eyebrow eyebrow-brown">{t.faq.eyebrow}</p><h2>{t.faq.title}</h2><ConsultButton onClick={onConsult} analytics="consultation-calendar-open">{t.cta.consult}</ConsultButton></div><div className="faq-list">{t.faq.items.map((item, index) => <details key={item.question}><summary><span className="faq-number">{String(index + 1).padStart(2, "0")}</span><span>{item.question}</span><ChevronDown size={20} aria-hidden="true" /></summary><p>{item.answer}</p></details>)}</div></div></section>;
 }
 
-export function FinalCta({ t, onConsult }: Props) {
-  return <section className="final-section section-space reveal-on-scroll"><div className="container final-inner"><p className="eyebrow eyebrow-brown">{t.final.eyebrow}</p><h2>{t.final.title}</h2><p className="lead">{t.final.body}</p><div className="final-actions"><CheckoutButton label={t.cta.final} analytics="final-start-llc" /><ConsultButton onClick={onConsult} analytics="final-book-consultation">{t.cta.consult}</ConsultButton></div></div></section>;
+export function FinalCta({ t, language, onConsult }: Props) {
+  return <section className="final-section section-space reveal-on-scroll"><div className="container final-inner"><p className="eyebrow eyebrow-brown">{t.final.eyebrow}</p><h2>{t.final.title}</h2><p className="lead">{t.final.body}</p><div className="final-actions"><CheckoutButton label={t.cta.final} analytics="final-start-llc" language={language} /><ConsultButton onClick={onConsult} analytics="final-book-consultation">{t.cta.consult}</ConsultButton></div></div></section>;
 }
 
 export function Footer({ t }: Props) {
   return <footer className="site-footer"><div className="container footer-main"><div className="footer-brand"><a href="#top" aria-label={t.a11y.logo}><BrandLogo className="brand-logo-large" /></a><p>{t.footer.tagline}</p></div><div className="footer-contact"><h2>{t.footer.contact}</h2><div><span>{t.footer.phone}</span><a href={BRAND.phoneHref}>{BRAND.phone}</a></div><div><span>{t.footer.email}</span><a href={BRAND.emailHref}>{BRAND.email}</a></div><div><span>{t.footer.website}</span><a href={BRAND.website} target="_blank" rel="noopener noreferrer">camikk.com <ArrowUpRight size={15} aria-hidden="true" /></a></div></div><div className="footer-address"><h2>{t.footer.address}</h2><p>{BRAND.address}</p><a href={BRAND.reviews} target="_blank" rel="noopener noreferrer nofollow">Google Maps <ArrowUpRight size={15} aria-hidden="true" /></a></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} CAMIKK Holdings. {t.footer.rights}</span><div><a href={BRAND.privacy} target="_blank" rel="noopener noreferrer">{t.footer.privacy}</a><a href={BRAND.terms} target="_blank" rel="noopener noreferrer">{t.footer.terms}</a></div></div></footer>;
 }
 
-export function MobileConversionBar({ t, onConsult, modalOpen }: Props & { modalOpen: boolean }) {
+export function MobileConversionBar({ t, language, onConsult, modalOpen }: Props & { modalOpen: boolean }) {
   if (modalOpen) return null;
-  return <div className="mobile-conversion-bar"><CheckoutButton label={t.cta.start} analytics="llc-checkout-disabled" /><button type="button" className="button mobile-question-button" onClick={onConsult} data-calendar-action="consultation-calendar-open" data-analytics="consultation-calendar-open">{t.cta.mobileQuestions}<ArrowRight size={17} aria-hidden="true" /></button></div>;
+  return <div className="mobile-conversion-bar"><CheckoutButton label={t.cta.start} analytics="llc-checkout-disabled" language={language} /><button type="button" className="button mobile-question-button" onClick={onConsult} data-calendar-action="consultation-calendar-open" data-analytics="consultation-calendar-open">{t.cta.mobileQuestions}<ArrowRight size={17} aria-hidden="true" /></button></div>;
 }

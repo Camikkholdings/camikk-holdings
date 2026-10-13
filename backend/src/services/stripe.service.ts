@@ -185,15 +185,15 @@ export class StripeService {
           totalAmount: totalAmount.toString(),
           stateFee: stateFee.toString(),
         },
-        success_url: `${siteUrl}/comenzar-llc?payment=success&token=${token}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${siteUrl}/comenzar-llc?state=${encodeURIComponent(payload.state)}`,
+        success_url: `${siteUrl}/comenzar-llc?payment=success&token=${token}&session_id={CHECKOUT_SESSION_ID}&lang=${payload.language || "es"}`,
+        cancel_url: `${siteUrl}/comenzar-llc?state=${encodeURIComponent(payload.state)}&lang=${payload.language || "es"}`,
       });
 
       sessionId = session.id;
-      sessionUrl = session.url || `${siteUrl}/comenzar-llc?payment=success&token=${token}&session_id=${session.id}`;
+      sessionUrl = session.url || `${siteUrl}/comenzar-llc?payment=success&token=${token}&session_id=${session.id}&lang=${payload.language || "es"}`;
     } else {
       sessionId = `mock_session_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
-      sessionUrl = `${siteUrl}/comenzar-llc?payment=success&token=${token}&session_id=${sessionId}`;
+      sessionUrl = `${siteUrl}/comenzar-llc?payment=success&token=${token}&session_id=${sessionId}&lang=${payload.language || "es"}`;
     }
 
     try {
@@ -377,15 +377,17 @@ export class StripeService {
     email: string;
     topic: string;
     description?: string;
+    language?: "es" | "en";
   }): Promise<{ url: string; sessionId: string; isMock?: boolean }> {
     const fee = 50;
+    const lang = payload.language || "es";
 
     if (!this.stripe) {
       const mockSessionId = `mock_consult_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
       return {
         url: `${ENV.FRONTEND_URL}/consulta-confirmada?session_id=${mockSessionId}&name=${encodeURIComponent(
           payload.fullName
-        )}`,
+        )}&lang=${lang}`,
         sessionId: mockSessionId,
         isMock: true,
       };
@@ -417,13 +419,14 @@ export class StripeService {
         description: payload.description || "",
         timeZone: "America/New_York",
         currency: "usd",
+        language: lang,
       },
-      success_url: `${ENV.FRONTEND_URL}/consulta-confirmada?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${ENV.FRONTEND_URL}/consulta`,
+      success_url: `${ENV.FRONTEND_URL}/consulta-confirmada?session_id={CHECKOUT_SESSION_ID}&lang=${lang}`,
+      cancel_url: `${ENV.FRONTEND_URL}/consulta?lang=${lang}`,
     });
 
     return {
-      url: session.url || `${ENV.FRONTEND_URL}/consulta-confirmada?session_id=${session.id}`,
+      url: session.url || `${ENV.FRONTEND_URL}/consulta-confirmada?session_id=${session.id}&lang=${lang}`,
       sessionId: session.id,
     };
   }

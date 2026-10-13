@@ -61,7 +61,7 @@ export class CheckoutController {
 
   async checkoutConsultation(req: Request, res: Response) {
     try {
-      const { fullName, phone, email, topic, description } = req.body;
+      const { fullName, phone, email, topic, description, language } = req.body;
 
       if (!fullName || !phone || !email || !topic) {
         return res.status(400).json({ error: "Nombre, teléfono, correo y tema son requeridos." });
@@ -73,6 +73,7 @@ export class CheckoutController {
         email,
         topic,
         description,
+        language: language === "en" ? "en" : "es",
       });
 
       return res.json(result);
