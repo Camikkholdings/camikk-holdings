@@ -96,7 +96,7 @@ export const en: DeepWiden<typeof es> = {
     title: "Frequently Asked Questions",
     items: [
       { question: "What is included in the LLC formation service?", answer: "It includes state LLC registration, an EIN from the IRS, Operating Agreement, Corporate Book, corporate seal and certificates, Registered Office for the first year and guidance throughout the process." },
-      { question: "How is the price calculated?", answer: "The cost consists of USD 725 for the CAMIKK HOLDINGS service plus the filing fee for the selected state." },
+      { question: "How is the price calculated?", answer: "The final total includes official registration in your selected state, obtaining the EIN, Operating Agreement, Corporate Book, seal, and the first year of Registered Office with no hidden fees." },
       { question: "Can the price change?", answer: "State fees may change, and some states may require publications, reports, taxes, licenses or other charges. The final amount must be validated before payment." },
       { question: "Can I form an LLC if I am not a U.S. resident?", answer: "CAMIKK HOLDINGS works with U.S. residents and international entrepreneurs. You do not need U.S. immigration status to register a company, although specific requirements may vary by case." },
       { question: "What information will I need?", answer: "You will be asked for information including your desired company name, primary activity, owner details, address, EIN information and valid identification documents." },
@@ -146,7 +146,6 @@ export const en: DeepWiden<typeof es> = {
     confirmations: {
       accurate: "I confirm that the information provided is correct.",
       stateApproval: "I understand that the requested name is subject to availability and state approval.",
-      additionalFees: "I understand that additional requirements or fees may exist depending on the state.",
       termsAccepted: "I accept the Terms and Conditions and Privacy Policy of CAMIKK Holdings.",
     },
     ctaPrefix: "Pay",

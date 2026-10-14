@@ -66,7 +66,7 @@ camikk-holdings/
    - El cliente puede abrir el enlace en su móvil, tablet o laptop.
    - El formulario consulta la base de datos por `token` y precarga todos los datos y documentos subidos.
 6. **Almacenamiento de Identificaciones en Amazon S3**:
-   - En el Paso 5 (Sección G), las identificaciones (Pasaporte/ID del Responsible Party, miembros, etc.) se envían al bucket S3.
+   - En el Paso 5 (Sección G), las identificaciones (Pasaporte/ID del Responsable, miembros, etc.) se envían al bucket S3.
    - La base de datos guarda la clave y la URL. El cliente puede previsualizar, eliminar o reemplazar archivos desde cualquier dispositivo.
 7. **Firma y Radicación Final**:
    - Validación de las 4 certificaciones legales y firma electrónica tipográfica.

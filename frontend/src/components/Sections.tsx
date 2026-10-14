@@ -24,7 +24,6 @@ export function Hero({ t, language, onConsult }: Props) {
         <p className="eyebrow hero-eyebrow"><span className="eyebrow-line" />{t.hero.eyebrow}</p>
         <h1>{t.hero.title}</h1>
         <p className="hero-description">{t.hero.description}</p>
-        <p className="hero-price">{t.hero.price}</p>
         <div className="hero-buttons">
           <CheckoutButton label={t.cta.start} analytics="hero-start-llc" language={language} />
           <ConsultButton onClick={onConsult} analytics="hero-book-consultation" className="hero-consult">{t.cta.questions}</ConsultButton>

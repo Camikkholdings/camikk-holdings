@@ -24,7 +24,7 @@ export type LlcCheckoutPayload = {
   confirmations: {
     accurate: boolean;
     stateApproval: boolean;
-    additionalFees: boolean;
+    additionalFees?: boolean;
     termsAccepted: boolean;
   };
 };
@@ -79,28 +79,18 @@ export async function createLlcCheckoutSession(
   }
 
   const session = await stripe.checkout.sessions.create({
+    locale: (lang === "en" ? "en" : "es-419") as any,
     customer_email: payload.email,
     line_items: [
       {
         price_data: {
           currency: "usd",
           product_data: {
-            name: "CAMIKK Holdings — Creación de LLC y Asesoría Legal",
-            description:
-              "Incluye Registro de LLC, EIN (IRS), Operating Agreement, Corporate Book, Sello y Certificados Corporativos, y 1 año de Registered Office.",
+            name: lang === "en"
+              ? "CAMIKK Holdings — LLC Formation and Legal Advisory"
+              : "CAMIKK Holdings — Creación de LLC y Asesoría Legal",
           },
-          unit_amount: CAMIKK_SERVICE_FEE * 100,
-        },
-        quantity: 1,
-      },
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: `Tarifa de registro estatal (State Filing Fee) — ${payload.state}`,
-            description: `Tarifa oficial gubernamental requerida por el estado de ${payload.state}.`,
-          },
-          unit_amount: stateFee * 100,
+          unit_amount: totalAmount * 100,
         },
         quantity: 1,
       },
@@ -166,6 +156,7 @@ export async function createConsultationCheckoutSession(
   }
 
   const session = await stripe.checkout.sessions.create({
+    locale: (lang === "en" ? "en" : "es-419") as any,
     customer_email: payload.email,
     line_items: [
       {

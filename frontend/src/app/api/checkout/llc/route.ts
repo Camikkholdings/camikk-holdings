@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
     if (
       !body.confirmations?.accurate ||
       !body.confirmations?.stateApproval ||
-      !body.confirmations?.additionalFees ||
       !body.confirmations?.termsAccepted
     ) {
       return NextResponse.json(

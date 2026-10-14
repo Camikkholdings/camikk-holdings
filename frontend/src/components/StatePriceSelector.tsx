@@ -27,11 +27,7 @@ export function StatePriceSelector({ t, language }: { t: Translation; language: 
             <option value="">{t.price.placeholder}</option>
             {(Object.keys(STATE_FEES) as StateName[]).map((state) => <option key={state} value={state}>{state}</option>)}
           </select>
-          <div className="price-rows">
-            <div><span>{t.price.service}</span><strong>{money.format(CAMIKK_SERVICE_FEE)}</strong></div>
-            <div><span>{t.price.filing}</span><strong>{stateFee === null ? "—" : money.format(stateFee)}</strong></div>
-          </div>
-          <div className="price-total" aria-live="polite">
+          <div className="price-total" aria-live="polite" style={{ marginTop: "22px", borderTop: "none", paddingTop: "0" }}>
             <span>{t.price.total}</span><strong>{selection ? money.format(selection.total) : "—"}</strong>
           </div>
           {!selection && <p className="price-empty">{t.price.empty}</p>}

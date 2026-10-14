@@ -264,6 +264,8 @@ function getInitialDossier(): DossierFormState {
     }
   }
 
+  updated.ein.fiscalYearEndMonth = "Diciembre";
+
   return updated;
 }
 
@@ -359,7 +361,7 @@ export function PostPaymentDossier() {
           estimatedEmployeesCount:
             dossier.einEstimatedEmployeesCount || prev.ein.estimatedEmployeesCount,
           firstWageDate: dossier.einFirstWageDate || prev.ein.firstWageDate,
-          fiscalYearEndMonth: dossier.einFiscalYearEndMonth || prev.ein.fiscalYearEndMonth,
+          fiscalYearEndMonth: "Diciembre",
           irsActivity: dossier.einIrsActivity || prev.ein.irsActivity,
           previouslyAppliedEin: dossier.einPreviouslyApplied || prev.ein.previouslyAppliedEin,
         },
@@ -1887,20 +1889,20 @@ export function PostPaymentDossier() {
                     </label>
                     <select
                       id="ein-fiscal-month"
-                      value={formData.ein.fiscalYearEndMonth}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          ein: { ...p.ein, fiscalYearEndMonth: e.target.value },
-                        }))
-                      }
+                      disabled
+                      value="Diciembre"
                       className="form-select"
+                      style={{
+                        backgroundColor: "#f8fafc",
+                        cursor: "not-allowed",
+                        color: "var(--petrol, #0f2b38)",
+                        opacity: 0.95,
+                      }}
+                      title={language === "en" ? "Fixed by default to December" : "Predefinido fijo a Diciembre"}
                     >
-                      {t.step3.fiscalMonths.map((m, idx) => (
-                        <option key={m} value={DOSSIER_TEXT.es.step3.fiscalMonths[idx]}>
-                          {m}
-                        </option>
-                      ))}
+                      <option value="Diciembre">
+                        {t.step3.fiscalMonths[0]}
+                      </option>
                     </select>
                   </div>
 

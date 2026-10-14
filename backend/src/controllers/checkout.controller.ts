@@ -25,10 +25,9 @@ export class CheckoutController {
       if (
         !confirmations?.accurate ||
         !confirmations?.stateApproval ||
-        !confirmations?.additionalFees ||
         !confirmations?.termsAccepted
       ) {
-        return res.status(400).json({ error: "Debe aceptar las 4 confirmaciones previas al pago." });
+        return res.status(400).json({ error: "Debe aceptar las confirmaciones requeridas previas al pago." });
       }
 
       const detectedOrigin =

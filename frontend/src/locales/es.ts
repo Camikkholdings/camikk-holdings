@@ -100,7 +100,7 @@ export const es = {
     title: "Preguntas frecuentes",
     items: [
       { question: "¿Qué incluye el servicio de creación de LLC?", answer: "Incluye el registro de la LLC ante el estado, EIN con el IRS, Operating Agreement, Corporate Book, sello y certificados corporativos, Registered Office durante el primer año y acompañamiento durante el proceso." },
-      { question: "¿Cómo se calcula el precio?", answer: "El costo se compone de USD 725 por el servicio de CAMIKK HOLDINGS más la tarifa de registro del estado seleccionado." },
+      { question: "¿Cómo se calcula el precio?", answer: "El importe final incluye el registro oficial ante el estado seleccionado, la obtención del EIN, Operating Agreement, Corporate Book, sello y el primer año de Registered Office sin costos ocultos." },
       { question: "¿El precio puede cambiar?", answer: "Las tarifas estatales pueden cambiar y algunos estados pueden exigir publicaciones, reportes, impuestos, licencias u otros cargos adicionales. El importe definitivo debe validarse antes del pago." },
       { question: "¿Puedo crear una LLC si soy extranjero?", answer: "CAMIKK HOLDINGS trabaja con residentes y emprendedores extranjeros. No necesitas estatus migratorio para registrar una empresa en Estados Unidos, aunque los requisitos específicos pueden variar según cada caso." },
       { question: "¿Qué información necesitaré?", answer: "Entre otros datos, se solicitarán el nombre deseado para la compañía, actividad principal, información de los propietarios, dirección, datos para el EIN y documentos de identificación vigentes." },
@@ -150,7 +150,6 @@ export const es = {
     confirmations: {
       accurate: "Confirmo que la información proporcionada es correcta.",
       stateApproval: "Entiendo que el nombre solicitado está sujeto a disponibilidad y aprobación del estado.",
-      additionalFees: "Entiendo que pueden existir requisitos o cargos adicionales según el estado.",
       termsAccepted: "Acepto los Términos y Condiciones y la Política de Privacidad de CAMIKK Holdings.",
     },
     ctaPrefix: "Pagar",

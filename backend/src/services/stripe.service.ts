@@ -134,7 +134,9 @@ export class StripeService {
         }
       }
 
+      const sessionLocale = payload.language === "en" ? "en" : "es-419";
       const session = await this.stripe.checkout.sessions.create({
+        locale: sessionLocale as any,
         ...(customerId
           ? { customer: customerId, customer_update: { name: "auto", address: "auto" } }
           : { customer_email: payload.email }),
@@ -143,22 +145,11 @@ export class StripeService {
             price_data: {
               currency: "usd",
               product_data: {
-                name: "CAMIKK Holdings — Creación de LLC y Asesoría Legal",
-                description:
-                  "Incluye Registro de LLC ante el estado, EIN (IRS), Operating Agreement, Corporate Book, Sello y Certificados Corporativos, y 1 año de Registered Office.",
+                name: payload.language === "en"
+                  ? "CAMIKK Holdings — LLC Formation and Legal Advisory"
+                  : "CAMIKK Holdings — Creación de LLC y Asesoría Legal",
               },
-              unit_amount: CAMIKK_SERVICE_FEE * 100,
-            },
-            quantity: 1,
-          },
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: `Tarifa de radicación estatal (State Filing Fee) — ${payload.state}`,
-                description: `Tarifa oficial requerida por el Departamento de Estado de ${payload.state}.`,
-              },
-              unit_amount: stateFee * 100,
+              unit_amount: totalAmount * 100,
             },
             quantity: 1,
           },
@@ -394,6 +385,7 @@ export class StripeService {
     }
 
     const session = await this.stripe.checkout.sessions.create({
+      locale: (lang === "en" ? "en" : "es-419") as any,
       customer_email: payload.email,
       line_items: [
         {

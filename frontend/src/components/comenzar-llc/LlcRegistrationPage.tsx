@@ -25,7 +25,7 @@ const TXT = {
     backHome: "Volver a la página principal",
     badge: "2. RUTA — COMENZAR MI LLC",
     title: "Datos iniciales antes del pago",
-    lead: "Ingresa la información básica de tu compañía para calcular la tarifa de radicación y proceder al pago seguro con Stripe.",
+    lead: "Ingresa la información básica de tu compañía para calcular el importe total y proceder al pago seguro con Stripe.",
     requiredData: "Datos Requeridos",
     fieldsNote: "Los campos con asterisco (*) son obligatorios.",
     fullName: "Nombre completo",
@@ -35,7 +35,7 @@ const TXT = {
     emailPlaceholder: "Ej. juan@tuempresa.com",
     stateLabel: "Estado donde desea registrar la LLC",
     stateSelectPlaceholder: "Selecciona uno de los 50 estados",
-    stateFeeSuffix: "Tarifa estatal:",
+    stateFeeSuffix: "",
     companyName: "Nombre deseado para la compañía",
     companyNamePlaceholder: "Ej. Innova Solutions LLC",
     secondName: "Segunda opción de nombre",
@@ -59,18 +59,17 @@ const TXT = {
       "Acompañamiento durante el proceso",
     ],
     registeredRenewalBadge: "Registered Office: primer año 100% incluido. La renovación posterior es voluntaria ($127/año opcional).",
-    priceTitle: "4. Lógica automática del precio",
-    priceFormula: "Fórmula: $725 CAMIKK Service Fee + State Filing Fee = Total a pagar hoy.",
+    priceTitle: "4. Total del servicio",
+    priceFormula: "",
     serviceFee: "Servicio CAMIKK",
     stateFeeLabel: "Tarifa estatal",
-    totalToPay: "Total a pagar hoy",
+    totalToPay: "Total a pagar",
     autoRenewActive: "✓ Renovación voluntaria activada: Se programará la renovación de Registered Office ($127 USD/año) a partir del año 2.",
     autoRenewInactive: "○ Sin renovación automática: Solo pagarás la constitución hoy. Primer año de Registered Office incluido sin cargos recurrentes.",
     selectStatePrompt: "Selecciona un estado en la lista para calcular el total.",
     confirmationsTitle: "5. Confirmaciones antes del pago",
     confirmAccurate: "Confirmo que la información proporcionada es correcta.",
     confirmStateApproval: "Entiendo que el nombre solicitado está sujeto a disponibilidad y aprobación del estado.",
-    confirmAdditionalFees: "Entiendo que pueden existir requisitos o cargos adicionales según el estado.",
     termsLabel: "Términos y Condiciones",
     privacyLabel: "Política de Privacidad",
     termsPrefix: "Acepto los",
@@ -82,7 +81,7 @@ const TXT = {
     autoRenewDescription: "El primer año está 100% incluido en tu pago de hoy. Marca esta casilla únicamente si decides que tu servicio de Registered Office se renueve automáticamente a partir del segundo año por $127 USD anuales para mantener la sede legal de tu empresa activa. Puedes cancelar o pausar esta suscripción en cualquier momento.",
     errorSelectState: "Por favor selecciona el estado donde deseas registrar la LLC.",
     errorRequiredFields: "Por favor completa todos los campos obligatorios (*) antes de continuar.",
-    errorConfirmations: "Debes marcar las 4 confirmaciones obligatorias antes de proceder al pago.",
+    errorConfirmations: "Debes marcar las 3 confirmaciones obligatorias antes de proceder al pago.",
     errorStripeConnect: "Error al conectar con Stripe.",
     submittingStripe: "Conectando con Stripe seguro...",
     payAndStart: (amount: string) => `Pagar ${amount} y Comenzar mi LLC`,
@@ -108,7 +107,7 @@ const TXT = {
     backHome: "Back to home",
     badge: "2. ROUTE — START MY LLC",
     title: "Initial Details Before Payment",
-    lead: "Enter your initial company information to calculate the state filing fee and proceed to secure checkout with Stripe.",
+    lead: "Enter your initial company information to calculate the total amount and proceed to secure checkout with Stripe.",
     requiredData: "Required Information",
     fieldsNote: "Fields marked with an asterisk (*) are required.",
     fullName: "Full Name",
@@ -118,7 +117,7 @@ const TXT = {
     emailPlaceholder: "e.g. john@yourcompany.com",
     stateLabel: "State where you want to register the LLC",
     stateSelectPlaceholder: "Select one of the 50 states",
-    stateFeeSuffix: "State fee:",
+    stateFeeSuffix: "",
     companyName: "Desired Company Name",
     companyNamePlaceholder: "e.g. Innova Solutions LLC",
     secondName: "Second Choice Company Name",
@@ -142,18 +141,17 @@ const TXT = {
       "Guidance throughout the process",
     ],
     registeredRenewalBadge: "Registered Office: first year 100% included. Subsequent renewal is voluntary ($127/year optional).",
-    priceTitle: "4. Automatic Price Calculation",
-    priceFormula: "Formula: $725 CAMIKK Service Fee + State Filing Fee = Total to pay today.",
+    priceTitle: "4. Total Service Cost",
+    priceFormula: "",
     serviceFee: "CAMIKK Service",
     stateFeeLabel: "State Filing Fee",
-    totalToPay: "Total to pay today",
+    totalToPay: "Total to pay",
     autoRenewActive: "✓ Voluntary renewal activated: Registered Office renewal ($127 USD/year) will be scheduled starting in year 2.",
     autoRenewInactive: "○ No automatic renewal: You only pay formation today. First year of Registered Office included with no recurring charges.",
     selectStatePrompt: "Select a state from the list to calculate the total.",
     confirmationsTitle: "5. Confirmations Before Payment",
     confirmAccurate: "I confirm that the information provided is correct.",
     confirmStateApproval: "I understand that the requested name is subject to availability and state approval.",
-    confirmAdditionalFees: "I understand that additional requirements or fees may exist depending on the state.",
     termsLabel: "Terms and Conditions",
     privacyLabel: "Privacy Policy",
     termsPrefix: "I accept the",
@@ -165,7 +163,7 @@ const TXT = {
     autoRenewDescription: "The first year is 100% included in today's payment. Check this box only if you choose to have your Registered Office service renew automatically starting in year two for $127 USD annually to keep your company's legal address active. You can cancel or pause this subscription at any time.",
     errorSelectState: "Please select the state where you wish to register the LLC.",
     errorRequiredFields: "Please complete all required fields (*) before continuing.",
-    errorConfirmations: "You must check all 4 required confirmations before proceeding to payment.",
+    errorConfirmations: "You must check all 3 required confirmations before proceeding to payment.",
     errorStripeConnect: "Error connecting to Stripe.",
     submittingStripe: "Connecting to secure Stripe...",
     payAndStart: (amount: string) => `Pay ${amount} and Start My LLC`,
@@ -198,12 +196,11 @@ export function LlcRegistrationPage() {
   const [secondChoiceName, setSecondChoiceName] = useState("");
   const [businessActivity, setBusinessActivity] = useState("");
   const [ownersCount, setOwnersCount] = useState<"1" | "2" | "3+">("1");
-  const [autoRenewRegisteredOffice, setAutoRenewRegisteredOffice] = useState(false);
+  const [autoRenewRegisteredOffice, setAutoRenewRegisteredOffice] = useState(true);
 
   const [confirmations, setConfirmations] = useState({
     accurate: false,
     stateApproval: false,
-    additionalFees: false,
     termsAccepted: false,
   });
 
@@ -325,7 +322,6 @@ export function LlcRegistrationPage() {
   const allConfirmed =
     confirmations.accurate &&
     confirmations.stateApproval &&
-    confirmations.additionalFees &&
     confirmations.termsAccepted;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -519,7 +515,7 @@ export function LlcRegistrationPage() {
                 <option value="">{t.stateSelectPlaceholder}</option>
                 {(Object.keys(STATE_FEES) as StateName[]).map((state) => (
                   <option key={state} value={state}>
-                    {state} — {t.stateFeeSuffix} {money.format(STATE_FEES[state])}
+                    {state}
                   </option>
                 ))}
               </select>
@@ -620,21 +616,8 @@ export function LlcRegistrationPage() {
               <h3 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "8px" }}>
                 {t.priceTitle}
               </h3>
-              <p className="price-formula-lead">{t.priceFormula}</p>
-              <div className="price-rows">
-                <div className="price-row">
-                  <span>{t.serviceFee}</span>
-                  <strong>{money.format(CAMIKK_SERVICE_FEE)}</strong>
-                </div>
-                <div className="price-row">
-                  <span>
-                    {t.stateFeeLabel} {selectedState ? `(${selectedState})` : ""}
-                  </span>
-                  <strong>{stateFee === null ? "—" : money.format(stateFee)}</strong>
-                </div>
-              </div>
 
-              <div className="price-total" aria-live="polite">
+              <div className="price-total" aria-live="polite" style={{ marginTop: "8px", borderTop: "none", paddingTop: "0" }}>
                 <span>{t.totalToPay}</span>
                 <strong className="total-highlight">
                   {totalAmount !== null ? money.format(totalAmount) : "—"}
@@ -682,16 +665,6 @@ export function LlcRegistrationPage() {
                   <span>{t.confirmStateApproval}</span>
                 </label>
 
-                <label className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    checked={confirmations.additionalFees}
-                    onChange={(e) =>
-                      setConfirmations((p) => ({ ...p, additionalFees: e.target.checked }))
-                    }
-                  />
-                  <span>{t.confirmAdditionalFees}</span>
-                </label>
 
                 <label className="checkbox-item">
                   <input
@@ -728,9 +701,6 @@ export function LlcRegistrationPage() {
                       <strong style={{ fontSize: "13px", color: "var(--petrol)" }}>
                         {t.autoRenewCheckboxTitle}
                       </strong>
-                      <span className={`badge-optional ${autoRenewRegisteredOffice ? "selected" : ""}`}>
-                        {autoRenewRegisteredOffice ? t.autoRenewBadgeActive : t.autoRenewBadgeOptional}
-                      </span>
                     </div>
                     <p style={{ fontSize: "12px", color: "var(--muted)", margin: "4px 0 0", lineHeight: "1.4" }}>
                       {t.autoRenewDescription}
