@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Clock3, Globe2, Headphones, MoveUpRight, Star } from "lucide-react";
@@ -41,6 +42,44 @@ export function TrustMetrics({ t }: Props) {
 }
 
 export function IntroVideo({ t }: Props) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || typeof window === "undefined" || !("IntersectionObserver" in window)) return;
+
+    // Set initial volume to 50%
+    video.volume = 0.5;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.3) {
+            video.volume = 0.5;
+            // Attempt to play with sound at 50% volume
+            video.muted = false;
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+              playPromise.catch((err) => {
+                // If browser blocks unmuted autoplay, fallback to muted so it continues playing
+                if (err.name === "NotAllowedError") {
+                  video.muted = true;
+                  video.play().catch(() => {});
+                }
+              });
+            }
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: [0, 0.3, 0.6] }
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section className="video-section section-space reveal-on-scroll">
       <div className="container">
@@ -51,6 +90,7 @@ export function IntroVideo({ t }: Props) {
         <div className="video-wrapper">
           <div className="video-card">
             <video
+              ref={videoRef}
               className="intro-video-player"
               controls
               playsInline
