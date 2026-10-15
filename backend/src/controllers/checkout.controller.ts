@@ -22,12 +22,18 @@ export class CheckoutController {
         return res.status(400).json({ error: "Todos los campos con asterisco (*) son obligatorios." });
       }
 
+      const isEnglish = req.body.language === "en";
+
       if (
         !confirmations?.accurate ||
         !confirmations?.stateApproval ||
         !confirmations?.termsAccepted
       ) {
-        return res.status(400).json({ error: "Debe aceptar las confirmaciones requeridas previas al pago." });
+        return res.status(400).json({
+          error: isEnglish
+            ? "You must check all 3 required confirmations before proceeding to payment."
+            : "Debes marcar las 3 confirmaciones obligatorias antes de proceder al pago.",
+        });
       }
 
       const detectedOrigin =

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Header } from "./Header";
 import { ConsultationCalendarModal } from "./ConsultationCalendarModal";
 import { StatePriceSelector } from "./StatePriceSelector";
-import { ConsultationSection, DecisionPaths, FaqAccordion, FinalCta, Footer, GoogleReviews, Hero, IncludedServices, MobileConversionBar, ProcessSteps, TrustMetrics, WhyCamikk } from "./Sections";
+import { ConsultationSection, DecisionPaths, FaqAccordion, FinalCta, Footer, GoogleReviews, Hero, IncludedServices, IntroVideo, MobileConversionBar, ProcessSteps, TrustMetrics, WhyCamikk } from "./Sections";
 import { getTranslation, type Language } from "@/locales";
 
 export function LandingPage({ initialLanguage }: { initialLanguage: Language }) {
@@ -83,6 +83,7 @@ export function LandingPage({ initialLanguage }: { initialLanguage: Language }) 
     <main id="content">
       <Hero {...sectionProps} />
       <TrustMetrics {...sectionProps} />
+      <IntroVideo {...sectionProps} />
       <DecisionPaths {...sectionProps} />
       <IncludedServices {...sectionProps} />
       <StatePriceSelector t={t} language={language} />

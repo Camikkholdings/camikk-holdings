@@ -135,12 +135,13 @@ export class PendingRecoveryService {
           const lastReminderAt = metadata.lastPendingReminderAt ? new Date(metadata.lastPendingReminderAt) : null;
           const reminderCount = Number(metadata.pendingReminderCount || 0);
 
-          // Control de frecuencia para no saturar al cliente
+          // Control de frecuencia: Solo enviar el recordatorio UNA SOLA VEZ al cliente
           if (!options?.force) {
-            // Evitar envíos repetidos en un lapso menor a 2.5 horas
-            if (lastReminderAt && Date.now() - lastReminderAt.getTime() < 2.5 * 60 * 60 * 1000) {
+            // Dar tiempo prudente (20 minutos) para que el cliente complete su pago en Stripe si recién abrió el checkout
+            const ageMinutes = (Date.now() - new Date(dossier.createdAt).getTime()) / (60 * 1000);
+            if (ageMinutes < 20) {
               console.log(
-                `⏳ [PendingRecovery] Omitiendo expediente ${dossier.token} (${clientEmail}): recordatorio enviado hace menos de 2.5h (${lastReminderAt.toISOString()})`
+                `⏳ [PendingRecovery] Omitiendo expediente ${dossier.token} (${clientEmail}): creado hace ${Math.round(ageMinutes)} min (esperando tiempo de pago en Stripe).`
               );
               result.skipped++;
               result.details.push({
@@ -148,15 +149,15 @@ export class PendingRecoveryService {
                 clientEmail,
                 clientPhone,
                 status: "skipped",
-                reason: `Recordatorio enviado hace menos de 2.5h (${lastReminderAt.toISOString()})`,
+                reason: `Creado hace ${Math.round(ageMinutes)} minutos. Esperando tiempo de pago regular.`,
               });
               continue;
             }
 
-            // Límite máximo de recordatorios (8 envíos = 2 días completos de 4 recordatorios diarios)
-            if (reminderCount >= 8) {
+            // Regla estricta: Solo se envía 1 recordatorio por cliente
+            if (reminderCount >= 1 || lastReminderAt) {
               console.log(
-                `ℹ️ [PendingRecovery] Omitiendo expediente ${dossier.token}: límite de recordatorios alcanzado (${reminderCount})`
+                `ℹ️ [PendingRecovery] Omitiendo expediente ${dossier.token} (${clientEmail}): recordatorio ya fue enviado previamente (${lastReminderAt ? lastReminderAt.toISOString() : "1 envío registrado"}). Máximo permitido: 1 envío.`
               );
               result.skipped++;
               result.details.push({
@@ -164,7 +165,7 @@ export class PendingRecoveryService {
                 clientEmail,
                 clientPhone,
                 status: "skipped",
-                reason: `Límite máximo de ${reminderCount} recordatorios alcanzado`,
+                reason: `El recordatorio ya fue enviado previamente. Solo se permite 1 envío por cliente.`,
               });
               continue;
             }

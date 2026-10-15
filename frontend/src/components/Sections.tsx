@@ -40,6 +40,35 @@ export function TrustMetrics({ t }: Props) {
   return <section className="trust-strip reveal-on-scroll"><div className="container trust-grid">{t.metrics.map((metric, index) => <div className="trust-item" key={metric}><strong>{numbers[index]}</strong><span>{metric}</span></div>)}</div></section>;
 }
 
+export function IntroVideo({ t }: Props) {
+  return (
+    <section className="video-section section-space reveal-on-scroll">
+      <div className="container">
+        <div className="video-header">
+          <h2 className="video-title">{t.introVideo.title}</h2>
+          <p className="lead video-subtitle">{t.introVideo.subtitle}</p>
+        </div>
+        <div className="video-wrapper">
+          <div className="video-card">
+            <video
+              className="intro-video-player"
+              controls
+              playsInline
+              preload="metadata"
+            >
+              <source
+                src="https://camikk-loan-documents.s3.us-east-2.amazonaws.com/Videos+frontend/Miguel+-+landing+page+1040x1384.mp4"
+                type="video/mp4"
+              />
+              Tu navegador no soporta la reproducción de video.
+            </video>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function DecisionPaths({ t, language, onConsult }: Props) {
   return <section className="paths-section section-space reveal-on-scroll"><div className="container">
     <div className="section-topline"><span className="section-index">01 / 05</span><span className="section-rule" /></div>

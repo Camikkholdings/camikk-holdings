@@ -32,6 +32,10 @@ export const es = {
     trust: "Acompañamiento para residentes y emprendedores extranjeros.",
   },
   metrics: ["años de experiencia", "clientes satisfechos", "empresas creadas"],
+  introVideo: {
+    title: "Tu LLC, en manos de un experto",
+    subtitle: "Conoce a Miguel Acosta y descubre cómo CAMIKK Holdings gestiona cada etapa del proceso para constituir tu empresa en Estados Unidos con confianza y acompañamiento profesional.",
+  },
   paths: {
     title: "¿Qué deseas hacer?",
     first: {

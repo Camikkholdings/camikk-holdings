@@ -36,6 +36,10 @@ export const en: DeepWiden<typeof es> = {
     trust: "Guidance for U.S. residents and international entrepreneurs.",
   },
   metrics: ["years of experience", "satisfied clients", "companies created"],
+  introVideo: {
+    title: "Your LLC, in the Hands of an Expert",
+    subtitle: "Meet Miguel Acosta and discover how CAMIKK Holdings manages every stage of the process to establish your company in the United States with confidence and professional guidance.",
+  },
   paths: {
     title: "Start Your LLC the Way You Need",
     first: { eyebrow: "I’M READY", title: "I Want to Start My LLC", body: "Choose the state, review the estimated cost and see everything included in the service." },

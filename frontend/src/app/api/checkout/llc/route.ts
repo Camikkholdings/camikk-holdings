@@ -28,13 +28,20 @@ export async function POST(req: NextRequest) {
     if (!body.ownersCount) {
       return NextResponse.json({ error: "Debe indicar la cantidad de propietarios." }, { status: 400 });
     }
+
+    const isEnglish = body.language === "en";
+
     if (
       !body.confirmations?.accurate ||
       !body.confirmations?.stateApproval ||
       !body.confirmations?.termsAccepted
     ) {
       return NextResponse.json(
-        { error: "Debe aceptar todas las confirmaciones antes de proceder al pago." },
+        {
+          error: isEnglish
+            ? "You must check all 3 required confirmations before proceeding to payment."
+            : "Debes marcar las 3 confirmaciones obligatorias antes de proceder al pago.",
+        },
         { status: 400 }
       );
     }
@@ -50,7 +57,14 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${backendUrl}/api/checkout/llc`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, siteUrl: origin }),
+      body: JSON.stringify({
+        ...body,
+        siteUrl: origin,
+        confirmations: {
+          ...body.confirmations,
+          additionalFees: true,
+        },
+      }),
     });
 
     const data = await res.json();

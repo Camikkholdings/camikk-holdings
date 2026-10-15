@@ -358,7 +358,10 @@ export function LlcRegistrationPage() {
           autoRenewRegisteredOffice,
           language,
           siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
-          confirmations,
+          confirmations: {
+            ...confirmations,
+            additionalFees: true,
+          },
         }),
       });
 
