@@ -6,6 +6,7 @@ const router = Router();
 // Autenticación
 router.post("/login", (req, res) => adminController.login(req, res));
 
+
 // Estadísticas generales
 router.get("/stats", (req, res) => adminController.getStats(req, res));
 
