@@ -31,6 +31,7 @@ import { DOSSIER_TEXT } from "./dossierLocales";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
+
 export type S3Document = {
   id: string;
   documentType: string;
