@@ -55,6 +55,15 @@ export const es = {
     intro: "Al contratar la creación de tu LLC con CAMIKK HOLDINGS, se incluyen los siguientes trámites, documentos y servicios:",
     items: ["Registro de la LLC ante el estado", "EIN con el IRS", "Operating Agreement", "Corporate Book", "Sello corporativo", "Certificados corporativos", "Registered Office durante el primer año", "Acompañamiento durante el proceso"],
     renewal: "La renovación del servicio de Registered Office después del primer año tiene un valor de USD 127 anuales.",
+    notice: {
+      title: "AVISO IMPORTANTE",
+      paragraphs: [
+        "CAMIKK Holdings es una empresa privada e independiente que actúa como proveedor externo de servicios de asistencia para la constitución y tramitación de LLC. No somos una entidad gubernamental ni formamos parte, representamos, estamos afiliados o contamos con el respaldo de ningún gobierno federal, estatal o local, Secretaría de Estado u otro organismo público de los Estados Unidos.",
+        "El precio total mostrado antes del pago y reflejado en la factura incluye la tarifa gubernamental correspondiente al registro inicial de la LLC en el estado seleccionado y los honorarios de CAMIKK Holdings por la preparación, gestión y tramitación del servicio contratado. Cualquier servicio o coste adicional que no forme parte del alcance contratado deberá indicarse expresamente antes de su cobro.",
+        "No es obligatorio contratar un proveedor externo para constituir una LLC. En muchos estados, cualquier persona puede realizar directamente el registro ante la Secretaría de Estado o el organismo estatal competente. Para consultar los requisitos, tarifas y procedimientos oficiales, puede visitar el sitio web de la autoridad de registro del estado en el que desea constituir su LLC.",
+        "CAMIKK Holdings no controla las decisiones ni los tiempos de procesamiento de las autoridades gubernamentales y no puede garantizar la aprobación de una solicitud dentro de un plazo determinado. La información proporcionada en esta página es de carácter general y no sustituye el asesoramiento legal, fiscal o contable profesional.",
+      ],
+    },
   },
   price: {
     eyebrow: "PRECIO ESTIMADO",

@@ -51,6 +51,15 @@ export const en: DeepWiden<typeof es> = {
     intro: "Your CAMIKK HOLDINGS LLC formation service includes the following filings, documents and guidance:",
     items: ["State LLC registration", "EIN from the IRS", "Operating Agreement", "Corporate Book", "Corporate seal", "Corporate certificates", "Registered Office for the first year", "Guidance throughout the process"],
     renewal: "After the first year, the Registered Office service renews at USD 127 per year.",
+    notice: {
+      title: "IMPORTANT NOTICE",
+      paragraphs: [
+        "CAMIKK Holdings is a private, independent company acting as a third-party service provider that assists customers with LLC formation and filing services. We are not a government agency and are not part of, affiliated with, endorsed by, or acting on behalf of any U.S. federal, state, or local government, Secretary of State, or other public authority.",
+        "The total price displayed before payment and shown on the invoice includes the applicable government filing fee for the initial LLC registration in the selected state, together with CAMIKK Holdings’ service fee for preparing, managing, and processing the purchased service. Any additional service or cost that is not included in the selected service scope must be disclosed separately before it is charged.",
+        "Customers are not required to use a third-party service provider to form an LLC. In many states, individuals may file directly with the Secretary of State or other applicable state registration authority. For official requirements, fees, and filing procedures, please visit the official website of the registration authority in the state where you wish to form your LLC.",
+        "CAMIKK Holdings does not control government decisions or processing times and cannot guarantee that an application will be approved within a specific period. The information provided on this website is for general informational purposes and does not replace professional legal, tax, or accounting advice.",
+      ],
+    },
   },
   price: {
     eyebrow: "ESTIMATED PRICE",

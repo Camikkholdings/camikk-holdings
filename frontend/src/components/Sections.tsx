@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Check, ChevronDown, Clock3, Globe2, Headphones, MoveUpRight, Star } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, Clock3, Globe2, Headphones, MoveUpRight, ShieldAlert, Star } from "lucide-react";
 import { BRAND } from "@/data/brand";
 import type { Translation, Language } from "@/locales";
 import { BrandLogo } from "./BrandLogo";
@@ -121,10 +121,45 @@ export function DecisionPaths({ t, language, onConsult }: Props) {
 }
 
 export function IncludedServices({ t }: Props) {
-  return <section className="included-section section-space reveal-on-scroll" id="que-incluye"><div className="container included-layout">
-    <div className="included-intro"><p className="eyebrow eyebrow-brown">{t.included.eyebrow}</p><h2>{t.included.title}</h2><p className="lead">{t.included.intro}</p><div className="included-rule" /></div>
-    <div className="included-list">{t.included.items.map((item, index) => <div className="included-row" key={item}><span className="included-number">{String(index + 1).padStart(2, "0")}</span><h3>{item}</h3><Check size={19} aria-hidden="true" /></div>)}<p className="included-note">{t.included.renewal}</p></div>
-  </div></section>;
+  return (
+    <section className="included-section section-space reveal-on-scroll" id="que-incluye">
+      <div className="container">
+        <div className="included-layout">
+          <div className="included-intro">
+            <p className="eyebrow eyebrow-brown">{t.included.eyebrow}</p>
+            <h2>{t.included.title}</h2>
+            <p className="lead">{t.included.intro}</p>
+            <div className="included-rule" />
+          </div>
+          <div className="included-list">
+            {t.included.items.map((item, index) => (
+              <div className="included-row" key={item}>
+                <span className="included-number">{String(index + 1).padStart(2, "0")}</span>
+                <h3>{item}</h3>
+                <Check size={19} aria-hidden="true" />
+              </div>
+            ))}
+            <p className="included-note">{t.included.renewal}</p>
+          </div>
+        </div>
+
+        {/* Aviso Importante / Important Notice */}
+        <div className="important-notice-card" aria-label={t.included.notice.title}>
+          <div className="notice-header">
+            <div className="notice-badge">
+              <ShieldAlert size={18} aria-hidden="true" />
+              <span>{t.included.notice.title}</span>
+            </div>
+          </div>
+          <div className="notice-content">
+            {t.included.notice.paragraphs.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function ProcessSteps({ t }: Props) {
