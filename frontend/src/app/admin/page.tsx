@@ -11,7 +11,7 @@ export default function AdminPage() {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
-  const [loginEmail, setLoginEmail] = useState<string>('admin@camikk.com');
+  const [loginEmail, setLoginEmail] = useState<string>('');
   const [loginPassword, setLoginPassword] = useState<string>('');
   const [loginError, setLoginError] = useState<string>('');
   const [isSubmittingLogin, setIsSubmittingLogin] = useState<boolean>(false);
@@ -472,7 +472,7 @@ export default function AdminPage() {
                 required
                 value={loginEmail}
                 onChange={e => setLoginEmail(e.target.value)}
-                placeholder="admin@camikk.com"
+                placeholder="correo@camikk.com"
                 className="admin-input-field"
               />
             </div>
@@ -487,12 +487,6 @@ export default function AdminPage() {
                 placeholder="••••••••••••"
                 className="admin-input-field"
               />
-            </div>
-
-            <div style={{ fontSize: 12, color: '#64748b', background: '#f8fafc', padding: '10px 12px', borderRadius: 8 }}>
-              <strong>Credenciales de Demostración:</strong><br />
-              Email: <code>admin@camikk.com</code><br />
-              Clave: <code>Camikk2026!Admin</code>
             </div>
 
             <button
