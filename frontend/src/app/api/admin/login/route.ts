@@ -11,6 +11,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email y contraseña requeridos." }, { status: 400 });
     }
 
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+    // 1. Intentar validar primero contra el Backend (Railway / PostgreSQL)
+    try {
+      const backendRes = await fetch(`${backendUrl}/api/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (backendRes.ok) {
+        const data = await backendRes.json();
+        const response = NextResponse.json({
+          success: true,
+          token: data.token,
+          admin: data.admin,
+          user: data.admin || data.user,
+        });
+
+        response.cookies.set("camikk_admin_session", data.token, {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 60 * 60 * 24 * 7,
+          path: "/",
+        });
+
+        return response;
+      }
+    } catch (backendErr) {
+      console.warn("[Admin Login] Backend no disponible o error al conectar, verificando localmente:", backendErr);
+    }
+
+    // 2. Fallback: Validar contra variables de entorno del Frontend (Vercel)
     if (
       email.trim().toLowerCase() !== DEFAULT_ADMIN_EMAIL.toLowerCase() ||
       password !== DEFAULT_ADMIN_PASSWORD
@@ -32,7 +65,6 @@ export async function POST(req: NextRequest) {
       admin: adminUser,
       user: adminUser,
     });
-
 
     response.cookies.set("camikk_admin_session", token, {
       httpOnly: false,
