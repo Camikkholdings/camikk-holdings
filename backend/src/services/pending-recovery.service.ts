@@ -3,7 +3,7 @@ import { prisma } from "../db/prisma";
 import { ENV } from "../config/env";
 import { ghlService } from "./ghl.service";
 import { mailService } from "./mail.service";
-import { CAMIKK_SERVICE_FEE, STATE_FEES } from "./stripe.service";
+import { getLlcPricing } from "./stripe.service";
 
 export interface PendingRecoveryResult {
   totalChecked: number;
@@ -129,7 +129,7 @@ export class PendingRecoveryService {
           const state = dossier.companyState || dossier.order?.state || "Delaware";
           const totalAmount = dossier.order
             ? Number(dossier.order.totalAmount)
-            : (STATE_FEES[state] || 0) + CAMIKK_SERVICE_FEE;
+            : getLlcPricing(state).total;
 
           const metadata = (dossier.order?.metadata as any) || {};
           const lastReminderAt = metadata.lastPendingReminderAt ? new Date(metadata.lastPendingReminderAt) : null;

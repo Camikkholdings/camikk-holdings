@@ -7,7 +7,7 @@ export const ENV = {
   NODE_ENV: process.env.NODE_ENV || "development",
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
   DATABASE_URL: process.env.DATABASE_URL || "",
-  
+
   // Stripe
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",
@@ -29,7 +29,7 @@ export const ENV = {
   SMTP_USER: process.env.SMTP_USER || "",
   SMTP_PASS: process.env.SMTP_PASS || "",
   EMAIL_FROM: process.env.EMAIL_FROM || "CAMIKK Holdings <notificaciones@camikk.com>",
-  
+
   // Admin credentials & notifications
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || "admin@camikk.com",
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "Camikk2026!Admin",

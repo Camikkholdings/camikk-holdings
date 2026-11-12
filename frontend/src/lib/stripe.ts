@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { STATE_FEES, CAMIKK_SERVICE_FEE, type StateName } from "@/data/stateFees";
+import { STATE_FEES, getLlcPricing, type StateName } from "@/data/stateFees";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -45,12 +45,11 @@ export async function createLlcCheckoutSession(
   payload: LlcCheckoutPayload,
   siteUrl: string
 ): Promise<{ url: string; sessionId: string; isMock?: boolean }> {
-  const stateFee = STATE_FEES[payload.state];
-  if (stateFee === undefined) {
+  if (!(payload.state in STATE_FEES)) {
     throw new Error(`Estado no válido: ${payload.state}`);
   }
 
-  const totalAmount = CAMIKK_SERVICE_FEE + stateFee;
+  const { stateFee, serviceFee, total: totalAmount } = getLlcPricing(payload.state);
   const lang = payload.language || "es";
 
   // Si no hay Stripe Secret Key configurada, operamos en modo DEMO/SIMULACIÓN seguro para pruebas
@@ -115,7 +114,7 @@ export async function createLlcCheckoutSession(
       siteUrl: payload.siteUrl || siteUrl,
       totalPaid: totalAmount.toString(),
       stateFee: stateFee.toString(),
-      serviceFee: CAMIKK_SERVICE_FEE.toString(),
+      serviceFee: serviceFee.toString(),
     },
     success_url: `${siteUrl}/dossier?session_id={CHECKOUT_SESSION_ID}&lang=${lang}`,
     cancel_url: `${siteUrl}/comenzar-llc?state=${encodeURIComponent(payload.state)}&lang=${lang}`,

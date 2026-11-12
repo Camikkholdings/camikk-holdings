@@ -14,6 +14,7 @@ export const STATE_FEES: Record<string, number> = {
   Arizona: 50,
   Arkansas: 45,
   California: 70,
+  Cauca: 1,
   Colorado: 50,
   Connecticut: 120,
   Delaware: 70,
@@ -61,6 +62,19 @@ export const STATE_FEES: Record<string, number> = {
   Wyoming: 100,
 };
 
+export function getLlcPricing(state: string | null | undefined): {
+  stateFee: number;
+  serviceFee: number;
+  total: number;
+} {
+  if (!state) return { stateFee: 0, serviceFee: CAMIKK_SERVICE_FEE, total: CAMIKK_SERVICE_FEE };
+  if (state.toLowerCase() === "cauca") {
+    return { stateFee: 1, serviceFee: 0, total: 1 };
+  }
+  const fee = STATE_FEES[state] ?? 0;
+  return { stateFee: fee, serviceFee: CAMIKK_SERVICE_FEE, total: CAMIKK_SERVICE_FEE + fee };
+}
+
 export class StripeService {
   public stripe: Stripe | null = null;
 
@@ -92,13 +106,12 @@ export class StripeService {
     siteUrl?: string;
     existingToken?: string;
   }): Promise<{ url: string; sessionId: string; token: string; isMock?: boolean }> {
-    const stateFee = STATE_FEES[payload.state];
-    if (stateFee === undefined) {
+    if (STATE_FEES[payload.state] === undefined) {
       throw new Error(`Estado no válido: ${payload.state}`);
     }
 
     const siteUrl = (payload.siteUrl || ENV.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
-    const totalAmount = CAMIKK_SERVICE_FEE + stateFee;
+    const { stateFee, serviceFee, total: totalAmount } = getLlcPricing(payload.state);
     const token = payload.existingToken || `cmk_${crypto.randomBytes(24).toString("hex")}`;
     const count = payload.ownersCount === "3+" ? 3 : parseInt(payload.ownersCount, 10) || 1;
     let submissionNumber = await getNextSubmissionNumber();
@@ -214,7 +227,7 @@ export class StripeService {
           clientId: client.id,
           type: "LLC_FORMATION",
           state: payload.state,
-          serviceFee: CAMIKK_SERVICE_FEE,
+          serviceFee,
           stateFee,
           totalAmount,
           stripeSessionId: sessionId,
@@ -340,7 +353,7 @@ export class StripeService {
         siteUrl,
         totalAmount,
         stateFee,
-        serviceFee: CAMIKK_SERVICE_FEE,
+        serviceFee,
         token,
         sessionId,
         submissionNumber,
@@ -509,7 +522,7 @@ export class StripeService {
           clientId: client.id,
           type: "LLC_FORMATION",
           state,
-          serviceFee: CAMIKK_SERVICE_FEE,
+          serviceFee: getLlcPricing(state).serviceFee,
           stateFee,
           totalAmount,
           stripeSessionId,

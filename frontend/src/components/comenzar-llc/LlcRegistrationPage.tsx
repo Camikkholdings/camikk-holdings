@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
-import { CAMIKK_SERVICE_FEE, STATE_FEES, type StateName } from "@/data/stateFees";
+import { getLlcPricing, STATE_FEES, type StateName } from "@/data/stateFees";
 import { BRAND } from "@/data/brand";
 import { PhoneInputWithCountry } from "@/components/common/PhoneInputWithCountry";
 
@@ -316,8 +316,9 @@ export function LlcRegistrationPage() {
     [language]
   );
 
-  const stateFee = selectedState ? STATE_FEES[selectedState] : null;
-  const totalAmount = stateFee !== null ? CAMIKK_SERVICE_FEE + stateFee : null;
+  const pricing = selectedState ? getLlcPricing(selectedState) : null;
+  const stateFee = pricing ? pricing.stateFee : null;
+  const totalAmount = pricing ? pricing.total : null;
 
   const allConfirmed =
     confirmations.accurate &&

@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { ArrowRight, Info } from "lucide-react";
-import { CAMIKK_SERVICE_FEE, STATE_FEES, type StateName } from "@/data/stateFees";
+import { getLlcPricing, STATE_FEES, type StateName } from "@/data/stateFees";
 import type { Language, Translation } from "@/locales";
 import { CheckoutButton, type CheckoutSelection } from "./CheckoutButton";
 
 export function StatePriceSelector({ t, language }: { t: Translation; language: Language }) {
   const [selected, setSelected] = useState<StateName | "">("");
   const money = useMemo(() => new Intl.NumberFormat(language === "es" ? "es-US" : "en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }), [language]);
-  const stateFee = selected ? STATE_FEES[selected] : null;
-  const selection: CheckoutSelection | null = selected && stateFee !== null ? { state: selected, stateFee, serviceFee: CAMIKK_SERVICE_FEE, total: CAMIKK_SERVICE_FEE + stateFee } : null;
+  const pricing = selected ? getLlcPricing(selected) : null;
+  const selection: CheckoutSelection | null = selected && pricing ? { state: selected, ...pricing } : null;
 
   return (
     <section id="crear-llc" className="price-section section-space reveal-on-scroll">
