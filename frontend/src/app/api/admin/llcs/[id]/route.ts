@@ -27,10 +27,29 @@ export async function PUT(
 
     if (backendResult?.success && backendResult?.dossier) {
       const d = backendResult.dossier;
+      const members = Array.isArray(d.membersData)
+        ? d.membersData
+        : body.members || body.membersData || [];
+
       return NextResponse.json({
         success: true,
         dossier: {
           ...d,
+          company: {
+            state: d.companyState || "Delaware",
+            name: d.companyName || "Compañía LLC",
+            secondChoice: d.companySecondChoice,
+            thirdChoice: d.companyThirdChoice,
+            startDate: d.companyStartDate,
+            activity: d.companyActivity || "",
+            description: d.companyDescription || "",
+            address: d.companyAddress || body.companyAddress || "",
+            cityStateZip: d.companyCityStateZip || body.companyCityStateZip || "",
+            phone: d.companyPhone,
+            email: d.companyEmail,
+            website: d.companyWebsite,
+          },
+          members,
           ein: {
             ssnOrItin: d.einSsnOrItin || body.ssnOrItin || body.einSsnOrItin || "No aplica",
             responsiblePartyName: d.einResponsiblePartyName || "",

@@ -592,15 +592,33 @@ export const adminDataStore = {
     globalDossiers.unshift(d);
     return d;
   },
-  updateDossier: (id: string, updates: Partial<AdminDossier> & { ssnOrItin?: string; einSsnOrItin?: string }) => {
+  updateDossier: (
+    id: string,
+    updates: Partial<AdminDossier> & {
+      ssnOrItin?: string;
+      einSsnOrItin?: string;
+      companyAddress?: string;
+      companyCityStateZip?: string;
+      membersData?: any[];
+    }
+  ) => {
     const idx = globalDossiers.findIndex((d) => d.id === id);
     if (idx !== -1) {
       const ssn = updates.ssnOrItin !== undefined ? updates.ssnOrItin : updates.einSsnOrItin;
       const currentEin = globalDossiers[idx].ein || ({} as any);
       const newEin = ssn !== undefined ? { ...currentEin, ssnOrItin: ssn } : currentEin;
+      const updatedMembers = updates.members || updates.membersData || globalDossiers[idx].members;
+      const updatedCompany = {
+        ...globalDossiers[idx].company,
+        ...(updates.companyAddress !== undefined && { address: updates.companyAddress }),
+        ...(updates.companyCityStateZip !== undefined && { cityStateZip: updates.companyCityStateZip }),
+      };
+
       globalDossiers[idx] = {
         ...globalDossiers[idx],
         ...updates,
+        company: updatedCompany,
+        members: updatedMembers,
         ein: newEin,
       };
       return globalDossiers[idx];

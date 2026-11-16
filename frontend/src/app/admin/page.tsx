@@ -39,6 +39,11 @@ export default function AdminPage() {
   const [editDossierNotes, setEditDossierNotes] = useState<string>('');
   const [editSsnOrItin, setEditSsnOrItin] = useState<string>('');
   const [savedSsnSuccess, setSavedSsnSuccess] = useState<boolean>(false);
+  const [editMembers, setEditMembers] = useState<AdminDossier['members']>([]);
+  const [editCompanyAddress, setEditCompanyAddress] = useState<string>('');
+  const [editCompanyCityStateZip, setEditCompanyCityStateZip] = useState<string>('');
+  const [savedMembersSuccess, setSavedMembersSuccess] = useState<boolean>(false);
+  const [savedCompanyAddressSuccess, setSavedCompanyAddressSuccess] = useState<boolean>(false);
   const [savingDossier, setSavingDossier] = useState<boolean>(false);
   const [showSsn, setShowSsn] = useState<boolean>(false);
 
@@ -186,6 +191,135 @@ export default function AdminPage() {
     setEditSsnOrItin(d.ein?.ssnOrItin || 'No aplica');
     setSavedSsnSuccess(false);
     setShowSsn(false);
+    setEditMembers(d.members ? JSON.parse(JSON.stringify(d.members)) : []);
+    setEditCompanyAddress(d.company?.address || '');
+    setEditCompanyCityStateZip(d.company?.cityStateZip || '');
+    setSavedMembersSuccess(false);
+    setSavedCompanyAddressSuccess(false);
+  };
+
+  const updateEditMember = (index: number, field: string, value: any) => {
+    setEditMembers(prev => {
+      const next = [...prev];
+      if (next[index]) {
+        next[index] = { ...next[index], [field]: value };
+      }
+      return next;
+    });
+  };
+
+  const handleSaveMembersDirectly = async () => {
+    if (!selectedDossier) return;
+    setSavingDossier(true);
+    setSavedMembersSuccess(false);
+    try {
+      const res = await fetch(`/api/admin/llcs/${selectedDossier.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('camikk_admin_token') || ''}`
+        },
+        body: JSON.stringify({
+          members: editMembers,
+          membersData: editMembers
+        })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        const updatedDossier = updated.dossier;
+        setDossiers(prev =>
+          prev.map(item =>
+            item.id === selectedDossier.id
+              ? {
+                  ...item,
+                  ...(updatedDossier || {}),
+                  members: editMembers
+                }
+              : item
+          )
+        );
+        setSelectedDossier(prev =>
+          prev
+            ? {
+                ...prev,
+                ...(updatedDossier || {}),
+                members: editMembers
+              }
+            : null
+        );
+        setSavedMembersSuccess(true);
+        setTimeout(() => setSavedMembersSuccess(false), 3000);
+      } else {
+        alert('Error al actualizar los miembros.');
+      }
+    } catch {
+      alert('Error de conexión al guardar.');
+    } finally {
+      setSavingDossier(false);
+    }
+  };
+
+  const handleSaveCompanyAddressDirectly = async () => {
+    if (!selectedDossier) return;
+    setSavingDossier(true);
+    setSavedCompanyAddressSuccess(false);
+    try {
+      const res = await fetch(`/api/admin/llcs/${selectedDossier.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('camikk_admin_token') || ''}`
+        },
+        body: JSON.stringify({
+          companyAddress: editCompanyAddress,
+          companyCityStateZip: editCompanyCityStateZip
+        })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        const updatedDossier = updated.dossier;
+        setDossiers(prev =>
+          prev.map(item =>
+            item.id === selectedDossier.id
+              ? {
+                  ...item,
+                  ...(updatedDossier || {}),
+                  company: {
+                    ...(item.company || {}),
+                    ...(updatedDossier?.company || {}),
+                    address: editCompanyAddress,
+                    cityStateZip: editCompanyCityStateZip
+                  }
+                }
+              : item
+          )
+        );
+        setSelectedDossier(prev =>
+          prev
+            ? {
+                ...prev,
+                ...(updatedDossier || {}),
+                company: {
+                  ...(prev.company || {}),
+                  ...(updatedDossier?.company || {}),
+                  address: editCompanyAddress,
+                  cityStateZip: editCompanyCityStateZip
+                }
+              }
+            : null
+        );
+        setSavedCompanyAddressSuccess(true);
+        setTimeout(() => setSavedCompanyAddressSuccess(false), 3000);
+      } else {
+        alert('Error al actualizar la dirección de la compañía.');
+      }
+    } catch {
+      alert('Error de conexión al guardar.');
+    } finally {
+      setSavingDossier(false);
+    }
   };
 
   const handleSaveDossier = async () => {
@@ -204,7 +338,11 @@ export default function AdminPage() {
           assignedEin: editAssignedEin,
           internalNotes: editDossierNotes,
           ssnOrItin: editSsnOrItin,
-          einSsnOrItin: editSsnOrItin
+          einSsnOrItin: editSsnOrItin,
+          companyAddress: editCompanyAddress,
+          companyCityStateZip: editCompanyCityStateZip,
+          members: editMembers,
+          membersData: editMembers
         })
       });
 
@@ -215,6 +353,13 @@ export default function AdminPage() {
           prev.map(item => item.id === selectedDossier.id ? {
             ...item,
             ...(updatedDossier || {}),
+            members: editMembers,
+            company: {
+              ...(item.company || {}),
+              ...(updatedDossier?.company || {}),
+              address: editCompanyAddress,
+              cityStateZip: editCompanyCityStateZip
+            },
             ein: {
               ...(item.ein || {}),
               ...(updatedDossier?.ein || {}),
@@ -976,7 +1121,7 @@ export default function AdminPage() {
                 onClick={() => setDossierModalTab('sectionC')}
                 className={`admin-modal-nav-tab ${dossierModalTab === 'sectionC' ? 'active' : ''}`}
               >
-                C. Miembros ({selectedDossier.members?.length || 0})
+                C. Miembros ({editMembers.length || selectedDossier.members?.length || 0})
               </button>
               <button
                 type="button"
@@ -1165,12 +1310,43 @@ export default function AdminPage() {
 
                   <div className="admin-kv-grid">
                     <div className="admin-kv-item">
-                      <span className="admin-kv-key">Dirección Principal</span>
-                      <span className="admin-kv-val">{selectedDossier.company.address}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span className="admin-kv-key" style={{ fontWeight: 700 }}>Dirección Principal (Editable)</span>
+                        {savedCompanyAddressSuccess && (
+                          <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 800 }}>✓ Guardado</span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={editCompanyAddress}
+                        onChange={(e) => setEditCompanyAddress(e.target.value)}
+                        className="admin-input-field"
+                        placeholder="Calle, número, suite"
+                        style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                      />
                     </div>
                     <div className="admin-kv-item">
-                      <span className="admin-kv-key">Ciudad / Estado / ZIP</span>
-                      <span className="admin-kv-val">{selectedDossier.company.cityStateZip}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span className="admin-kv-key" style={{ fontWeight: 700 }}>Ciudad / Estado / ZIP (Editable)</span>
+                        <button
+                          type="button"
+                          onClick={handleSaveCompanyAddressDirectly}
+                          disabled={savingDossier}
+                          className="admin-btn-sm primary"
+                          style={{ padding: '2px 8px', fontSize: 11 }}
+                          title="Guardar dirección de la compañía"
+                        >
+                          {savingDossier ? '...' : 'Guardar Dir.'}
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={editCompanyCityStateZip}
+                        onChange={(e) => setEditCompanyCityStateZip(e.target.value)}
+                        className="admin-input-field"
+                        placeholder="Ciudad, Estado, Código Postal"
+                        style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                      />
                     </div>
                     <div className="admin-kv-item">
                       <span className="admin-kv-key">Teléfono del Negocio</span>
@@ -1222,49 +1398,164 @@ export default function AdminPage() {
               {/* TAB C: MIEMBROS / PROPIETARIOS */}
               {dossierModalTab === 'sectionC' && (
                 <div>
-                  <div className="admin-section-title" style={{ marginBottom: 16 }}>
-                    C. Información de Cada Miembro / Propietario ({selectedDossier.members?.length || 0})
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div className="admin-section-title" style={{ margin: 0 }}>
+                      C. Información de Cada Miembro / Propietario ({editMembers.length || selectedDossier.members?.length || 0})
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {savedMembersSuccess && (
+                        <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 800 }}>
+                          ✓ Información de miembros guardada
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleSaveMembersDirectly}
+                        disabled={savingDossier}
+                        className="admin-btn-sm primary"
+                        style={{ padding: '7px 16px', fontSize: 12, fontWeight: 700 }}
+                      >
+                        {savingDossier ? 'Guardando...' : 'Guardar Información de Miembros'}
+                      </button>
+                    </div>
                   </div>
-                  {selectedDossier.members?.map((m, idx) => (
-                    <div key={m.id || idx} className="admin-member-card">
+
+                  {editMembers.map((m, idx) => (
+                    <div key={m.id || idx} className="admin-member-card" style={{ marginBottom: 16 }}>
                       <div className="admin-member-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <span style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>
-                            {idx + 1}. {m.fullName}
+                            Miembro #{idx + 1}
                           </span>
-                          <span style={{ fontSize: 12, fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: 4 }}>
-                            {m.title}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: '#16a34a' }}>
-                          {m.ownershipPercentage}% Propiedad
                         </div>
                       </div>
 
-                      <div className="admin-kv-grid">
+                      <div className="admin-kv-grid" style={{ marginTop: 12 }}>
                         <div className="admin-kv-item">
-                          <span className="admin-kv-key">Dirección Residencial</span>
-                          <span className="admin-kv-val">{m.address}</span>
+                          <label className="admin-kv-key" style={{ fontWeight: 700 }}>Nombre Legal Completo *</label>
+                          <input
+                            type="text"
+                            value={m.fullName || ''}
+                            onChange={(e) => updateEditMember(idx, 'fullName', e.target.value)}
+                            className="admin-input-field"
+                            placeholder="Nombre del miembro"
+                            style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                          />
                         </div>
                         <div className="admin-kv-item">
-                          <span className="admin-kv-key">Ciudad / Estado / ZIP</span>
-                          <span className="admin-kv-val">{m.cityStateZip}</span>
+                          <label className="admin-kv-key" style={{ fontWeight: 700 }}>Porcentaje de Propiedad (%) *</label>
+                          <input
+                            type="number"
+                            value={m.ownershipPercentage ?? ''}
+                            onChange={(e) => updateEditMember(idx, 'ownershipPercentage', Number(e.target.value))}
+                            className="admin-input-field"
+                            placeholder="100"
+                            style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                          />
                         </div>
                         <div className="admin-kv-item">
-                          <span className="admin-kv-key">Correo Electrónico</span>
-                          <span className="admin-kv-val">{m.email}</span>
+                          <label className="admin-kv-key" style={{ color: '#0f172a', fontWeight: 700 }}>
+                            Dirección Residencial * (Obligatorio)
+                          </label>
+                          <input
+                            type="text"
+                            value={m.address || ''}
+                            onChange={(e) => updateEditMember(idx, 'address', e.target.value)}
+                            className="admin-input-field"
+                            placeholder="Calle, número, depto / apto"
+                            style={{
+                              padding: '6px 10px',
+                              fontSize: 13,
+                              background: '#ffffff',
+                              width: '100%',
+                              borderColor: !m.address?.trim() ? '#f87171' : undefined
+                            }}
+                          />
+                          {!m.address?.trim() && (
+                            <span style={{ fontSize: 11, color: '#ef4444', marginTop: 2 }}>* Campo requerido</span>
+                          )}
                         </div>
                         <div className="admin-kv-item">
-                          <span className="admin-kv-key">Teléfono</span>
-                          <span className="admin-kv-val">{m.phone}</span>
+                          <label className="admin-kv-key" style={{ color: '#0f172a', fontWeight: 700 }}>
+                            Ciudad / Estado / ZIP * (Obligatorio)
+                          </label>
+                          <input
+                            type="text"
+                            value={m.cityStateZip || ''}
+                            onChange={(e) => updateEditMember(idx, 'cityStateZip', e.target.value)}
+                            className="admin-input-field"
+                            placeholder="Ciudad, Provincia o Estado, Código Postal"
+                            style={{
+                              padding: '6px 10px',
+                              fontSize: 13,
+                              background: '#ffffff',
+                              width: '100%',
+                              borderColor: !m.cityStateZip?.trim() ? '#f87171' : undefined
+                            }}
+                          />
+                          {!m.cityStateZip?.trim() && (
+                            <span style={{ fontSize: 11, color: '#ef4444', marginTop: 2 }}>* Campo requerido</span>
+                          )}
                         </div>
                         <div className="admin-kv-item">
-                          <span className="admin-kv-key">Capital Inicial Aportado</span>
-                          <span className="admin-kv-val">{m.initialCapital || 'N/A'}</span>
+                          <label className="admin-kv-key" style={{ fontWeight: 700 }}>Correo Electrónico *</label>
+                          <input
+                            type="email"
+                            value={m.email || ''}
+                            onChange={(e) => updateEditMember(idx, 'email', e.target.value)}
+                            className="admin-input-field"
+                            placeholder="correo@ejemplo.com"
+                            style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                          />
+                        </div>
+                        <div className="admin-kv-item">
+                          <label className="admin-kv-key" style={{ fontWeight: 700 }}>Teléfono *</label>
+                          <input
+                            type="text"
+                            value={m.phone || ''}
+                            onChange={(e) => updateEditMember(idx, 'phone', e.target.value)}
+                            className="admin-input-field"
+                            placeholder="+1 555 123 4567"
+                            style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                          />
+                        </div>
+                        <div className="admin-kv-item">
+                          <label className="admin-kv-key" style={{ fontWeight: 700 }}>Capital Inicial Aportado</label>
+                          <input
+                            type="text"
+                            value={m.initialCapital || ''}
+                            onChange={(e) => updateEditMember(idx, 'initialCapital', e.target.value)}
+                            className="admin-input-field"
+                            placeholder="Ej. USD 1,000"
+                            style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                          />
+                        </div>
+                        <div className="admin-kv-item">
+                          <label className="admin-kv-key" style={{ fontWeight: 700 }}>Cargo o Función en la Compañía</label>
+                          <input
+                            type="text"
+                            value={m.title || ''}
+                            onChange={(e) => updateEditMember(idx, 'title', e.target.value)}
+                            className="admin-input-field"
+                            placeholder="Member / Propietario Principal"
+                            style={{ padding: '6px 10px', fontSize: 13, background: '#ffffff', width: '100%' }}
+                          />
                         </div>
                       </div>
                     </div>
                   ))}
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+                    <button
+                      type="button"
+                      onClick={handleSaveMembersDirectly}
+                      disabled={savingDossier}
+                      className="admin-btn-sm primary"
+                      style={{ padding: '8px 20px', fontSize: 13, fontWeight: 700 }}
+                    >
+                      {savingDossier ? 'Guardando...' : 'Guardar Información de Miembros'}
+                    </button>
+                  </div>
                 </div>
               )}
 

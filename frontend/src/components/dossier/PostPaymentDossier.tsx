@@ -29,7 +29,15 @@ import { STATE_FEES, type StateName } from "@/data/stateFees";
 import { BRAND } from "@/data/brand";
 import { DOSSIER_TEXT } from "./dossierLocales";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")
+    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "")
+    : typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
+      ? ""
+      : process.env.NODE_ENV === "production"
+        ? ""
+        : "http://localhost:4000"
+);
 
 
 export type S3Document = {
@@ -821,6 +829,20 @@ export function PostPaymentDossier() {
     setStepError(null);
 
     const errors: Record<string, string> = {};
+
+    for (let i = 0; i < formData.members.length; i++) {
+      const m = formData.members[i];
+      if (!m.fullName?.trim()) {
+        errors[`member_${i}_fullName`] = t.validations.memberName;
+      }
+      if (!m.address?.trim()) {
+        errors[`member_${i}_address`] = t.validations.memberAddress;
+      }
+      if (!m.cityStateZip?.trim()) {
+        errors[`member_${i}_cityStateZip`] = t.validations.memberCityZip;
+      }
+    }
+
     if (!formData.certifications.accurate) {
       errors["certifications.accurate"] = t.validations.certAccurate;
     }

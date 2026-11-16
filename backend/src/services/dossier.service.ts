@@ -329,6 +329,27 @@ export class DossierService {
       throw new Error("Debe aceptar todas las certificaciones obligatorias y estampar su firma electrónica.");
     }
 
+    // Validar que todos los miembros tengan dirección residencial y ciudad/estado/zip
+    const membersToCheck = Array.isArray(payload.members)
+      ? payload.members
+      : Array.isArray(dossier.membersData)
+      ? (dossier.membersData as any[])
+      : [];
+
+    for (let i = 0; i < membersToCheck.length; i++) {
+      const m = membersToCheck[i];
+      if (!m.address || !m.address.trim()) {
+        throw new Error(
+          `La dirección residencial del miembro #${i + 1} (${m.fullName || "Sin nombre"}) es obligatoria.`
+        );
+      }
+      if (!m.cityStateZip || !m.cityStateZip.trim()) {
+        throw new Error(
+          `La ciudad/estado/código postal del miembro #${i + 1} (${m.fullName || "Sin nombre"}) es obligatoria.`
+        );
+      }
+    }
+
     // Guardar primero el estado
     await this.saveDraft(token, payload);
 

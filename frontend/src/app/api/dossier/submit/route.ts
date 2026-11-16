@@ -12,6 +12,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validación obligatoria de Dirección Residencial y Ciudad/Estado/ZIP para cada miembro
+    if (Array.isArray(data.members)) {
+      for (let i = 0; i < data.members.length; i++) {
+        const m = data.members[i];
+        if (!m.address?.trim()) {
+          return NextResponse.json(
+            { error: `La dirección residencial del miembro #${i + 1} (${m.fullName || "Sin nombre"}) es obligatoria.` },
+            { status: 400 }
+          );
+        }
+        if (!m.cityStateZip?.trim()) {
+          return NextResponse.json(
+            { error: `La ciudad, estado y código postal del miembro #${i + 1} (${m.fullName || "Sin nombre"}) son obligatorios.` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
     
     // Si viene con token

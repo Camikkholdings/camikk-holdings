@@ -248,9 +248,14 @@ export class AdminController {
         assignedEin,
         stateFilingNumber,
         internalNotes,
+        companyAddress,
+        companyCityStateZip,
+        members,
+        membersData,
       } = req.body;
 
       const ssnValue = ssnOrItin !== undefined ? ssnOrItin : einSsnOrItin;
+      const membersToSave = membersData !== undefined ? membersData : members;
 
       const updated = await prisma.dossier.update({
         where: { id },
@@ -258,6 +263,9 @@ export class AdminController {
           ...(status && { status }),
           ...(submissionNumber && { submissionNumber }),
           ...(companyName && { companyName }),
+          ...(companyAddress !== undefined && { companyAddress }),
+          ...(companyCityStateZip !== undefined && { companyCityStateZip }),
+          ...(membersToSave !== undefined && { membersData: membersToSave }),
           ...(ssnValue !== undefined && { einSsnOrItin: String(ssnValue) }),
         },
       });
