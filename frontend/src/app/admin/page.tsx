@@ -42,7 +42,6 @@ export default function AdminPage() {
   const [editMembers, setEditMembers] = useState<AdminDossier['members']>([]);
   const [editCompanyAddress, setEditCompanyAddress] = useState<string>('');
   const [editCompanyCityStateZip, setEditCompanyCityStateZip] = useState<string>('');
-  const [savedMembersSuccess, setSavedMembersSuccess] = useState<boolean>(false);
   const [savedCompanyAddressSuccess, setSavedCompanyAddressSuccess] = useState<boolean>(false);
   const [savingDossier, setSavingDossier] = useState<boolean>(false);
   const [showSsn, setShowSsn] = useState<boolean>(false);
@@ -194,7 +193,6 @@ export default function AdminPage() {
     setEditMembers(d.members ? JSON.parse(JSON.stringify(d.members)) : []);
     setEditCompanyAddress(d.company?.address || '');
     setEditCompanyCityStateZip(d.company?.cityStateZip || '');
-    setSavedMembersSuccess(false);
     setSavedCompanyAddressSuccess(false);
   };
 
@@ -206,58 +204,6 @@ export default function AdminPage() {
       }
       return next;
     });
-  };
-
-  const handleSaveMembersDirectly = async () => {
-    if (!selectedDossier) return;
-    setSavingDossier(true);
-    setSavedMembersSuccess(false);
-    try {
-      const res = await fetch(`/api/admin/llcs/${selectedDossier.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('camikk_admin_token') || ''}`
-        },
-        body: JSON.stringify({
-          members: editMembers,
-          membersData: editMembers
-        })
-      });
-
-      if (res.ok) {
-        const updated = await res.json();
-        const updatedDossier = updated.dossier;
-        setDossiers(prev =>
-          prev.map(item =>
-            item.id === selectedDossier.id
-              ? {
-                  ...item,
-                  ...(updatedDossier || {}),
-                  members: editMembers
-                }
-              : item
-          )
-        );
-        setSelectedDossier(prev =>
-          prev
-            ? {
-                ...prev,
-                ...(updatedDossier || {}),
-                members: editMembers
-              }
-            : null
-        );
-        setSavedMembersSuccess(true);
-        setTimeout(() => setSavedMembersSuccess(false), 3000);
-      } else {
-        alert('Error al actualizar los miembros.');
-      }
-    } catch {
-      alert('Error de conexión al guardar.');
-    } finally {
-      setSavingDossier(false);
-    }
   };
 
   const handleSaveCompanyAddressDirectly = async () => {
@@ -1398,26 +1344,8 @@ export default function AdminPage() {
               {/* TAB C: MIEMBROS / PROPIETARIOS */}
               {dossierModalTab === 'sectionC' && (
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div className="admin-section-title" style={{ margin: 0 }}>
-                      C. Información de Cada Miembro / Propietario ({editMembers.length || selectedDossier.members?.length || 0})
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {savedMembersSuccess && (
-                        <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 800 }}>
-                          ✓ Información de miembros guardada
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={handleSaveMembersDirectly}
-                        disabled={savingDossier}
-                        className="admin-btn-sm primary"
-                        style={{ padding: '7px 16px', fontSize: 12, fontWeight: 700 }}
-                      >
-                        {savingDossier ? 'Guardando...' : 'Guardar Información de Miembros'}
-                      </button>
-                    </div>
+                  <div className="admin-section-title" style={{ marginBottom: 16 }}>
+                    C. Información de Cada Miembro / Propietario ({editMembers.length || selectedDossier.members?.length || 0})
                   </div>
 
                   {editMembers.map((m, idx) => (
@@ -1544,18 +1472,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ))}
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-                    <button
-                      type="button"
-                      onClick={handleSaveMembersDirectly}
-                      disabled={savingDossier}
-                      className="admin-btn-sm primary"
-                      style={{ padding: '8px 20px', fontSize: 13, fontWeight: 700 }}
-                    >
-                      {savingDossier ? 'Guardando...' : 'Guardar Información de Miembros'}
-                    </button>
-                  </div>
                 </div>
               )}
 

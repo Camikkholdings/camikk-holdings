@@ -465,6 +465,8 @@
   background: #f4f8f8;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .dossier-header {
@@ -588,12 +590,17 @@
   padding: 10px;
   border: 1px solid var(--line);
   box-shadow: 0 4px 20px rgba(0, 35, 48, 0.04);
+  overflow: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .stepper-track {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .stepper-step-btn {
@@ -607,6 +614,9 @@
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .stepper-step-btn:hover {
@@ -631,6 +641,7 @@
   display: grid;
   place-items: center;
   flex: none;
+  flex-shrink: 0;
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
@@ -645,6 +656,8 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .step-num {
@@ -652,6 +665,9 @@
   color: var(--muted);
   text-transform: uppercase;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .step-name {
@@ -1032,7 +1048,7 @@
   }
 
   .stepper-track {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .consult-grid-inputs {
@@ -1045,6 +1061,67 @@
 }
 
 @media (max-width: 768px) {
+  .dossier-main {
+    padding-block: 20px 48px;
+  }
+
+  .dossier-header-inner {
+    gap: 12px;
+  }
+
+  .dossier-header-actions {
+    gap: 8px !important;
+  }
+
+  .dossier-stepper-nav {
+    margin-bottom: 20px;
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  .stepper-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stepper-step-btn {
+    padding: 8px 8px;
+    gap: 8px;
+    border-radius: 8px;
+  }
+
+  .step-icon-wrap {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .step-num {
+    font-size: 9px;
+  }
+
+  .step-name {
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .sub-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .member-card {
+    padding: 18px 14px;
+  }
+
   .form-group-row {
     grid-template-columns: 1fr;
   }
@@ -1061,16 +1138,28 @@
     grid-template-columns: 1fr;
   }
 
-  .stepper-track {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .summary-data-grid {
     grid-template-columns: 1fr;
   }
 
+  .summary-data-grid div {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
   .step-panel {
     padding: 24px 18px;
+  }
+
+  .step-panel-head {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+  }
+
+  .step-panel-head h2 {
+    font-size: 24px;
+    word-break: break-word;
   }
 
   .dossier-wizard-footer {
@@ -1090,6 +1179,64 @@
   .btn-wizard-save {
     width: 100%;
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .dossier-stepper-nav {
+    padding: 5px;
+    border-radius: 10px;
+  }
+
+  .stepper-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .stepper-step-btn {
+    padding: 6px 6px;
+    gap: 6px;
+  }
+
+  .step-icon-wrap {
+    width: 24px;
+    height: 24px;
+  }
+
+  .step-icon-wrap svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .step-num {
+    font-size: 8.5px;
+  }
+
+  .step-name {
+    font-size: 10.5px;
+    line-height: 1.15;
+  }
+
+  .step-panel {
+    padding: 18px 12px;
+    border-radius: 14px;
+  }
+
+  .step-panel-head h2 {
+    font-size: 21px;
+  }
+
+  .member-card {
+    padding: 14px 10px;
+  }
+
+  .button-device-link span {
+    display: none;
+  }
+
+  .button-device-link {
+    padding: 6px 8px;
+    min-height: 32px;
   }
 }
 

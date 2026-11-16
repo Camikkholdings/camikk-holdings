@@ -134,85 +134,185 @@ export type DossierFormState = {
   };
 };
 
-const initialDossierState: DossierFormState = {
-  company: {
-    state: "",
-    name: "",
-    secondChoice: "",
-    thirdChoice: "",
-    startDate: "",
-    activity: "",
-    description: "",
-    address: "",
-    cityStateZip: "",
-    phone: "",
-    email: "",
-    website: "",
+export const DEFAULT_TEXT_MAP = {
+  withdrawal: {
+    es: "Derecho de tanteo para los miembros existentes antes de vender a terceros.",
+    en: "Right of first refusal for existing members before selling to third parties.",
   },
-  structure: {
-    totalMembers: 1,
-    managementType: "Member-Managed",
-    signingAuthority: "",
-    hasNonOwnerManagers: "No",
-    managerNames: "",
+  distribution: {
+    es: "Proporcional al porcentaje de participación",
+    en: "Proportional to ownership percentage",
   },
-  members: [
-    {
-      id: "member-1",
-      fullName: "",
-      address: "",
-      cityStateZip: "",
-      email: "",
-      phone: "",
-      ownershipPercentage: 100,
-      initialCapital: "",
-      roleOrTitle: "Member / Dueño Principal",
-    },
-  ],
-  ein: {
-    responsiblePartyName: "",
-    ssnOrItin: "",
-    responsiblePartyAddress: "",
-    hasEmployeesNext12Months: "No",
-    estimatedEmployeesCount: "",
-    firstWageDate: "",
-    fiscalYearEndMonth: "Diciembre",
-    irsActivity: "",
-    previouslyAppliedEin: "No",
+  distributionAlt: {
+    es: "Proporcional al porcentaje de propiedad",
+    en: "Proportional to membership interest percentage",
   },
-  operatingAgreement: {
-    profitLossDistribution: "Proporcional al porcentaje de participación",
-    isDistributionProportional: "Si",
-    agreedDistributionExplanation: "",
-    decisionMaking: "Mayoría",
-    memberWithdrawalTerms: "Derecho de tanteo para los miembros existentes antes de vender a terceros.",
-    specialAgreements: "",
+  rolePrincipal: {
+    es: "Member / Dueño Principal",
+    en: "Member / Principal Owner",
   },
-  registeredOffice: {
-    confirmedService: true,
-    preferredMailingAddress: "",
-    primaryContactPerson: "",
-  },
-  documents: {},
-  certifications: {
-    accurate: false,
-    authorized: false,
-    governmentContactNotice: false,
-    delaysNotice: false,
-    signature: "",
-    date: new Date().toISOString().split("T")[0],
+  fiscalMonth: {
+    es: "Diciembre",
+    en: "December",
   },
 };
 
+export function getInitialLanguage(): "es" | "en" {
+  if (typeof window === "undefined") return "es";
+  const params = new URLSearchParams(window.location.search);
+  const urlLang = params.get("lang");
+  const storedLang = window.localStorage.getItem("camikk-language");
+  if (urlLang === "en" || (!urlLang && storedLang === "en")) {
+    return "en";
+  }
+  return "es";
+}
+
+export function translateDefaultTexts(data: DossierFormState, toLang: "es" | "en"): DossierFormState {
+  const fromLang = toLang === "en" ? "es" : "en";
+  const updated: DossierFormState = {
+    ...data,
+    operatingAgreement: { ...data.operatingAgreement },
+    ein: { ...data.ein },
+    members: data.members ? [...data.members] : [],
+  };
+
+  // 1. Operating Agreement: member withdrawal terms
+  const currentWithdrawal = updated.operatingAgreement?.memberWithdrawalTerms?.trim();
+  if (
+    !currentWithdrawal ||
+    currentWithdrawal === DEFAULT_TEXT_MAP.withdrawal[fromLang].trim()
+  ) {
+    updated.operatingAgreement.memberWithdrawalTerms = DEFAULT_TEXT_MAP.withdrawal[toLang];
+  }
+
+  // 2. Operating Agreement: profit / loss distribution
+  const currentDist = updated.operatingAgreement?.profitLossDistribution?.trim();
+  if (
+    !currentDist ||
+    currentDist === DEFAULT_TEXT_MAP.distribution[fromLang].trim() ||
+    currentDist === DEFAULT_TEXT_MAP.distributionAlt[fromLang].trim() ||
+    currentDist === DEFAULT_TEXT_MAP.distributionAlt[toLang].trim()
+  ) {
+    updated.operatingAgreement.profitLossDistribution = DEFAULT_TEXT_MAP.distribution[toLang];
+  }
+
+  // 3. EIN: fiscal month
+  const currentMonth = updated.ein?.fiscalYearEndMonth?.trim();
+  if (!currentMonth || currentMonth === DEFAULT_TEXT_MAP.fiscalMonth[fromLang].trim()) {
+    updated.ein.fiscalYearEndMonth = DEFAULT_TEXT_MAP.fiscalMonth[toLang];
+  }
+
+  // 4. Member role / title
+  if (Array.isArray(updated.members)) {
+    updated.members = updated.members.map((m, idx) => {
+      let role = m.roleOrTitle?.trim() || "";
+      if (!role || role === DEFAULT_TEXT_MAP.rolePrincipal[fromLang].trim()) {
+        role = DEFAULT_TEXT_MAP.rolePrincipal[toLang];
+      } else if (fromLang === "es" && /^Member \/ Co-propietario (\d+)$/i.test(role)) {
+        const num = role.replace(/^Member \/ Co-propietario /i, "");
+        role = `Member / Co-owner ${num}`;
+      } else if (fromLang === "en" && /^Member \/ Co-owner (\d+)$/i.test(role)) {
+        const num = role.replace(/^Member \/ Co-owner /i, "");
+        role = `Member / Co-propietario ${num}`;
+      }
+      return { ...m, roleOrTitle: role };
+    });
+  }
+
+  return updated;
+}
+
+function buildInitialDossierState(lang: "es" | "en"): DossierFormState {
+  const isEn = lang === "en";
+  return {
+    company: {
+      state: "",
+      name: "",
+      secondChoice: "",
+      thirdChoice: "",
+      startDate: "",
+      activity: "",
+      description: "",
+      address: "",
+      cityStateZip: "",
+      phone: "",
+      email: "",
+      website: "",
+    },
+    structure: {
+      totalMembers: 1,
+      managementType: "Member-Managed",
+      signingAuthority: "",
+      hasNonOwnerManagers: "No",
+      managerNames: "",
+    },
+    members: [
+      {
+        id: "member-1",
+        fullName: "",
+        address: "",
+        cityStateZip: "",
+        email: "",
+        phone: "",
+        ownershipPercentage: 100,
+        initialCapital: "",
+        roleOrTitle: isEn ? DEFAULT_TEXT_MAP.rolePrincipal.en : DEFAULT_TEXT_MAP.rolePrincipal.es,
+      },
+    ],
+    ein: {
+      responsiblePartyName: "",
+      ssnOrItin: "",
+      responsiblePartyAddress: "",
+      hasEmployeesNext12Months: "No",
+      estimatedEmployeesCount: "",
+      firstWageDate: "",
+      fiscalYearEndMonth: isEn ? DEFAULT_TEXT_MAP.fiscalMonth.en : DEFAULT_TEXT_MAP.fiscalMonth.es,
+      irsActivity: "",
+      previouslyAppliedEin: "No",
+    },
+    operatingAgreement: {
+      profitLossDistribution: isEn
+        ? DEFAULT_TEXT_MAP.distribution.en
+        : DEFAULT_TEXT_MAP.distribution.es,
+      isDistributionProportional: "Si",
+      agreedDistributionExplanation: "",
+      decisionMaking: "Mayoría",
+      memberWithdrawalTerms: isEn
+        ? DEFAULT_TEXT_MAP.withdrawal.en
+        : DEFAULT_TEXT_MAP.withdrawal.es,
+      specialAgreements: "",
+    },
+    registeredOffice: {
+      confirmedService: true,
+      preferredMailingAddress: "",
+      primaryContactPerson: "",
+    },
+    documents: {},
+    certifications: {
+      accurate: false,
+      authorized: false,
+      governmentContactNotice: false,
+      delaysNotice: false,
+      signature: "",
+      date: new Date().toISOString().split("T")[0],
+    },
+  };
+}
+
+const initialDossierState: DossierFormState = buildInitialDossierState("es");
+
 function getInitialDossier(): DossierFormState {
-  if (typeof window === "undefined") return initialDossierState;
+  const initialLang = getInitialLanguage();
+  const baseState = buildInitialDossierState(initialLang);
+  if (typeof window === "undefined") return baseState;
 
   const params = new URLSearchParams(window.location.search);
   const savedDraft = window.localStorage.getItem("camikk_dossier_draft");
-  let stateToUse = initialDossierState;
+  let stateToUse = baseState;
   if (savedDraft) {
     try {
-      stateToUse = { ...initialDossierState, ...JSON.parse(savedDraft) };
+      stateToUse = { ...baseState, ...JSON.parse(savedDraft) };
     } catch (e) {
       console.error("Error parsing saved draft:", e);
     }
@@ -266,35 +366,32 @@ function getInitialDossier(): DossierFormState {
           phone: "",
           ownershipPercentage: percent,
           initialCapital: "",
-          roleOrTitle: `Member / Co-propietario ${i + 1}`,
+          roleOrTitle: initialLang === "en" ? `Member / Co-owner ${i + 1}` : `Member / Co-propietario ${i + 1}`,
         });
       }
       updated.members = [...updated.members, ...extraMembers];
     }
   }
 
-  updated.ein.fiscalYearEndMonth = "Diciembre";
-
-  return updated;
+  return translateDefaultTexts(updated, initialLang);
 }
 
 export function PostPaymentDossier() {
-  const [language, setLanguage] = useState<"es" | "en">("es");
+  const [language, setLanguage] = useState<"es" | "en">(getInitialLanguage);
   const t = DOSSIER_TEXT[language];
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlLang = params.get("lang");
     const storedLang = typeof window !== "undefined" ? window.localStorage.getItem("camikk-language") : null;
-    if (urlLang === "en" || (!urlLang && storedLang === "en")) {
-      setLanguage("en");
-    } else {
-      setLanguage("es");
-    }
+    const targetLang: "es" | "en" = (urlLang === "en" || (!urlLang && storedLang === "en")) ? "en" : "es";
+    setLanguage(targetLang);
+    setFormData((prev) => translateDefaultTexts(prev, targetLang));
   }, []);
 
   const handleLanguageChange = (next: "es" | "en") => {
     setLanguage(next);
+    setFormData((prev) => translateDefaultTexts(prev, next));
     if (typeof window !== "undefined") {
       window.localStorage.setItem("camikk-language", next);
       const url = new URL(window.location.href);
@@ -398,6 +495,8 @@ export function PostPaymentDossier() {
             dossier.roPrimaryContactPerson || prev.registeredOffice.primaryContactPerson,
         },
       }));
+      const activeLang = getInitialLanguage();
+      setFormData((prev) => translateDefaultTexts(prev, activeLang));
 
       if (dossier.currentStep) {
         setCurrentStep(dossier.currentStep);
