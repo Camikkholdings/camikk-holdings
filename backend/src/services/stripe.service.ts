@@ -14,7 +14,6 @@ export const STATE_FEES: Record<string, number> = {
   Arizona: 50,
   Arkansas: 45,
   California: 70,
-  Cauca: 1,
   Colorado: 50,
   Connecticut: 120,
   Delaware: 70,
@@ -68,9 +67,6 @@ export function getLlcPricing(state: string | null | undefined): {
   total: number;
 } {
   if (!state) return { stateFee: 0, serviceFee: CAMIKK_SERVICE_FEE, total: CAMIKK_SERVICE_FEE };
-  if (state.toLowerCase() === "cauca") {
-    return { stateFee: 1, serviceFee: 0, total: 1 };
-  }
   const fee = STATE_FEES[state] ?? 0;
   return { stateFee: fee, serviceFee: CAMIKK_SERVICE_FEE, total: CAMIKK_SERVICE_FEE + fee };
 }

@@ -42,7 +42,6 @@ export default function AdminPage() {
   const [editMembers, setEditMembers] = useState<AdminDossier['members']>([]);
   const [editCompanyAddress, setEditCompanyAddress] = useState<string>('');
   const [editCompanyCityStateZip, setEditCompanyCityStateZip] = useState<string>('');
-  const [savedCompanyAddressSuccess, setSavedCompanyAddressSuccess] = useState<boolean>(false);
   const [savingDossier, setSavingDossier] = useState<boolean>(false);
   const [showSsn, setShowSsn] = useState<boolean>(false);
 
@@ -193,7 +192,6 @@ export default function AdminPage() {
     setEditMembers(d.members ? JSON.parse(JSON.stringify(d.members)) : []);
     setEditCompanyAddress(d.company?.address || '');
     setEditCompanyCityStateZip(d.company?.cityStateZip || '');
-    setSavedCompanyAddressSuccess(false);
   };
 
   const updateEditMember = (index: number, field: string, value: any) => {
@@ -204,68 +202,6 @@ export default function AdminPage() {
       }
       return next;
     });
-  };
-
-  const handleSaveCompanyAddressDirectly = async () => {
-    if (!selectedDossier) return;
-    setSavingDossier(true);
-    setSavedCompanyAddressSuccess(false);
-    try {
-      const res = await fetch(`/api/admin/llcs/${selectedDossier.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('camikk_admin_token') || ''}`
-        },
-        body: JSON.stringify({
-          companyAddress: editCompanyAddress,
-          companyCityStateZip: editCompanyCityStateZip
-        })
-      });
-
-      if (res.ok) {
-        const updated = await res.json();
-        const updatedDossier = updated.dossier;
-        setDossiers(prev =>
-          prev.map(item =>
-            item.id === selectedDossier.id
-              ? {
-                  ...item,
-                  ...(updatedDossier || {}),
-                  company: {
-                    ...(item.company || {}),
-                    ...(updatedDossier?.company || {}),
-                    address: editCompanyAddress,
-                    cityStateZip: editCompanyCityStateZip
-                  }
-                }
-              : item
-          )
-        );
-        setSelectedDossier(prev =>
-          prev
-            ? {
-                ...prev,
-                ...(updatedDossier || {}),
-                company: {
-                  ...(prev.company || {}),
-                  ...(updatedDossier?.company || {}),
-                  address: editCompanyAddress,
-                  cityStateZip: editCompanyCityStateZip
-                }
-              }
-            : null
-        );
-        setSavedCompanyAddressSuccess(true);
-        setTimeout(() => setSavedCompanyAddressSuccess(false), 3000);
-      } else {
-        alert('Error al actualizar la dirección de la compañía.');
-      }
-    } catch {
-      alert('Error de conexión al guardar.');
-    } finally {
-      setSavingDossier(false);
-    }
   };
 
   const handleSaveDossier = async () => {
@@ -1256,12 +1192,9 @@ export default function AdminPage() {
 
                   <div className="admin-kv-grid">
                     <div className="admin-kv-item">
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span className="admin-kv-key" style={{ fontWeight: 700 }}>Dirección Principal (Editable)</span>
-                        {savedCompanyAddressSuccess && (
-                          <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 800 }}>✓ Guardado</span>
-                        )}
-                      </div>
+                      <span className="admin-kv-key" style={{ fontWeight: 700, marginBottom: 4, display: 'block' }}>
+                        Dirección Principal (Editable)
+                      </span>
                       <input
                         type="text"
                         value={editCompanyAddress}
@@ -1272,19 +1205,9 @@ export default function AdminPage() {
                       />
                     </div>
                     <div className="admin-kv-item">
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span className="admin-kv-key" style={{ fontWeight: 700 }}>Ciudad / Estado / ZIP (Editable)</span>
-                        <button
-                          type="button"
-                          onClick={handleSaveCompanyAddressDirectly}
-                          disabled={savingDossier}
-                          className="admin-btn-sm primary"
-                          style={{ padding: '2px 8px', fontSize: 11 }}
-                          title="Guardar dirección de la compañía"
-                        >
-                          {savingDossier ? '...' : 'Guardar Dir.'}
-                        </button>
-                      </div>
+                      <span className="admin-kv-key" style={{ fontWeight: 700, marginBottom: 4, display: 'block' }}>
+                        Ciudad / Estado / ZIP (Editable)
+                      </span>
                       <input
                         type="text"
                         value={editCompanyCityStateZip}

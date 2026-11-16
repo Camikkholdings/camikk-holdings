@@ -148,7 +148,7 @@ export const DEFAULT_TEXT_MAP = {
     en: "Proportional to membership interest percentage",
   },
   rolePrincipal: {
-    es: "Member / Dueño Principal",
+    es: "Member / Propietario Principal",
     en: "Member / Principal Owner",
   },
   fiscalMonth: {
@@ -169,53 +169,93 @@ export function getInitialLanguage(): "es" | "en" {
 }
 
 export function translateDefaultTexts(data: DossierFormState, toLang: "es" | "en"): DossierFormState {
-  const fromLang = toLang === "en" ? "es" : "en";
   const updated: DossierFormState = {
     ...data,
     operatingAgreement: { ...data.operatingAgreement },
     ein: { ...data.ein },
-    members: data.members ? [...data.members] : [],
+    members: data.members ? data.members.map((m) => ({ ...m })) : [],
   };
 
   // 1. Operating Agreement: member withdrawal terms
   const currentWithdrawal = updated.operatingAgreement?.memberWithdrawalTerms?.trim();
-  if (
+  const normWithdrawal = currentWithdrawal?.replace(/\.$/, "").toLowerCase();
+  const isDefaultWithdrawalEs =
     !currentWithdrawal ||
-    currentWithdrawal === DEFAULT_TEXT_MAP.withdrawal[fromLang].trim()
-  ) {
-    updated.operatingAgreement.memberWithdrawalTerms = DEFAULT_TEXT_MAP.withdrawal[toLang];
+    normWithdrawal === DEFAULT_TEXT_MAP.withdrawal.es.trim().replace(/\.$/, "").toLowerCase();
+  const isDefaultWithdrawalEn =
+    !currentWithdrawal ||
+    normWithdrawal === DEFAULT_TEXT_MAP.withdrawal.en.trim().replace(/\.$/, "").toLowerCase();
+
+  if (toLang === "en" && isDefaultWithdrawalEs) {
+    updated.operatingAgreement.memberWithdrawalTerms = DEFAULT_TEXT_MAP.withdrawal.en;
+  } else if (toLang === "es" && isDefaultWithdrawalEn) {
+    updated.operatingAgreement.memberWithdrawalTerms = DEFAULT_TEXT_MAP.withdrawal.es;
   }
 
   // 2. Operating Agreement: profit / loss distribution
-  const currentDist = updated.operatingAgreement?.profitLossDistribution?.trim();
-  if (
+  const currentDist = updated.operatingAgreement?.profitLossDistribution?.trim().toLowerCase();
+  const isDefaultDistEs =
     !currentDist ||
-    currentDist === DEFAULT_TEXT_MAP.distribution[fromLang].trim() ||
-    currentDist === DEFAULT_TEXT_MAP.distributionAlt[fromLang].trim() ||
-    currentDist === DEFAULT_TEXT_MAP.distributionAlt[toLang].trim()
-  ) {
-    updated.operatingAgreement.profitLossDistribution = DEFAULT_TEXT_MAP.distribution[toLang];
+    currentDist === DEFAULT_TEXT_MAP.distribution.es.trim().toLowerCase() ||
+    currentDist === DEFAULT_TEXT_MAP.distributionAlt.es.trim().toLowerCase();
+  const isDefaultDistEn =
+    !currentDist ||
+    currentDist === DEFAULT_TEXT_MAP.distribution.en.trim().toLowerCase() ||
+    currentDist === DEFAULT_TEXT_MAP.distributionAlt.en.trim().toLowerCase();
+
+  if (toLang === "en" && isDefaultDistEs) {
+    updated.operatingAgreement.profitLossDistribution = DEFAULT_TEXT_MAP.distribution.en;
+  } else if (toLang === "es" && isDefaultDistEn) {
+    updated.operatingAgreement.profitLossDistribution = DEFAULT_TEXT_MAP.distribution.es;
   }
 
   // 3. EIN: fiscal month
-  const currentMonth = updated.ein?.fiscalYearEndMonth?.trim();
-  if (!currentMonth || currentMonth === DEFAULT_TEXT_MAP.fiscalMonth[fromLang].trim()) {
-    updated.ein.fiscalYearEndMonth = DEFAULT_TEXT_MAP.fiscalMonth[toLang];
+  const currentMonth = updated.ein?.fiscalYearEndMonth?.trim().toLowerCase();
+  const isDefaultMonthEs = !currentMonth || currentMonth === "diciembre";
+  const isDefaultMonthEn = !currentMonth || currentMonth === "december";
+
+  if (toLang === "en" && isDefaultMonthEs) {
+    updated.ein.fiscalYearEndMonth = "December";
+  } else if (toLang === "es" && isDefaultMonthEn) {
+    updated.ein.fiscalYearEndMonth = "Diciembre";
   }
 
   // 4. Member role / title
   if (Array.isArray(updated.members)) {
-    updated.members = updated.members.map((m, idx) => {
+    updated.members = updated.members.map((m) => {
       let role = m.roleOrTitle?.trim() || "";
-      if (!role || role === DEFAULT_TEXT_MAP.rolePrincipal[fromLang].trim()) {
-        role = DEFAULT_TEXT_MAP.rolePrincipal[toLang];
-      } else if (fromLang === "es" && /^Member \/ Co-propietario (\d+)$/i.test(role)) {
-        const num = role.replace(/^Member \/ Co-propietario /i, "");
-        role = `Member / Co-owner ${num}`;
-      } else if (fromLang === "en" && /^Member \/ Co-owner (\d+)$/i.test(role)) {
-        const num = role.replace(/^Member \/ Co-owner /i, "");
-        role = `Member / Co-propietario ${num}`;
+      const lower = role.toLowerCase();
+
+      const isSpanishPrincipal =
+        !role ||
+        lower === "member / propietario principal" ||
+        lower === "member / dueño principal" ||
+        lower === "member / dueno principal" ||
+        lower === "propietario principal" ||
+        lower === "dueño principal" ||
+        lower === "dueno principal";
+
+      const isEnglishPrincipal =
+        !role ||
+        lower === "member / principal owner" ||
+        lower === "principal owner";
+
+      if (toLang === "en") {
+        if (isSpanishPrincipal) {
+          role = "Member / Principal Owner";
+        } else if (/^Member \/ Co-propietario (\d+)$/i.test(role)) {
+          const num = role.replace(/^Member \/ Co-propietario /i, "");
+          role = `Member / Co-owner ${num}`;
+        }
+      } else {
+        if (isEnglishPrincipal) {
+          role = "Member / Propietario Principal";
+        } else if (/^Member \/ Co-owner (\d+)$/i.test(role)) {
+          const num = role.replace(/^Member \/ Co-owner /i, "");
+          role = `Member / Co-propietario ${num}`;
+        }
       }
+
       return { ...m, roleOrTitle: role };
     });
   }
@@ -427,76 +467,81 @@ export function PostPaymentDossier() {
   // Función para poblar el formulario desde el expediente persistido en backend
   const hydrateFromDossier = (dossier: any) => {
     startTransition(() => {
-      setFormData((prev) => ({
-        ...prev,
-        company: {
-          ...prev.company,
-          state: dossier.companyState || prev.company.state,
-          name: dossier.companyName || prev.company.name,
-          secondChoice: dossier.companySecondChoice || prev.company.secondChoice,
-          thirdChoice: dossier.companyThirdChoice || prev.company.thirdChoice,
-          startDate: dossier.companyStartDate || prev.company.startDate,
-          activity: dossier.companyActivity || prev.company.activity,
-          description: dossier.companyDescription || prev.company.description,
-          address: dossier.companyAddress || prev.company.address,
-          cityStateZip: dossier.companyCityStateZip || prev.company.cityStateZip,
-          phone: dossier.companyPhone || prev.company.phone,
-          email: dossier.companyEmail || prev.company.email,
-          website: dossier.companyWebsite || prev.company.website,
-        },
-        structure: {
-          ...prev.structure,
-          totalMembers: dossier.totalMembers || prev.structure.totalMembers,
-          managementType: dossier.managementType || prev.structure.managementType,
-          signingAuthority: dossier.signingAuthority || prev.structure.signingAuthority,
-          hasNonOwnerManagers: dossier.hasNonOwnerManagers || prev.structure.hasNonOwnerManagers,
-          managerNames: dossier.managerNames || prev.structure.managerNames,
-        },
-        members:
-          dossier.membersData && Array.isArray(dossier.membersData) && dossier.membersData.length > 0
-            ? dossier.membersData
-            : prev.members,
-        ein: {
-          ...prev.ein,
-          responsiblePartyName: dossier.einResponsiblePartyName || prev.ein.responsiblePartyName,
-          ssnOrItin: dossier.einSsnOrItin || prev.ein.ssnOrItin,
-          responsiblePartyAddress:
-            dossier.einResponsiblePartyAddress || prev.ein.responsiblePartyAddress,
-          hasEmployeesNext12Months:
-            dossier.einHasEmployeesNext12Months || prev.ein.hasEmployeesNext12Months,
-          estimatedEmployeesCount:
-            dossier.einEstimatedEmployeesCount || prev.ein.estimatedEmployeesCount,
-          firstWageDate: dossier.einFirstWageDate || prev.ein.firstWageDate,
-          fiscalYearEndMonth: "Diciembre",
-          irsActivity: dossier.einIrsActivity || prev.ein.irsActivity,
-          previouslyAppliedEin: dossier.einPreviouslyApplied || prev.ein.previouslyAppliedEin,
-        },
-        operatingAgreement: {
-          ...prev.operatingAgreement,
-          profitLossDistribution:
-            dossier.oaProfitLossDistribution || prev.operatingAgreement.profitLossDistribution,
-          isDistributionProportional:
-            dossier.oaIsDistributionProportional || prev.operatingAgreement.isDistributionProportional,
-          agreedDistributionExplanation:
-            dossier.oaAgreedDistributionExplanation ||
-            prev.operatingAgreement.agreedDistributionExplanation,
-          decisionMaking: dossier.oaDecisionMaking || prev.operatingAgreement.decisionMaking,
-          memberWithdrawalTerms:
-            dossier.oaMemberWithdrawalTerms || prev.operatingAgreement.memberWithdrawalTerms,
-          specialAgreements:
-            dossier.oaSpecialAgreements || prev.operatingAgreement.specialAgreements,
-        },
-        registeredOffice: {
-          ...prev.registeredOffice,
-          confirmedService: dossier.roConfirmedService ?? prev.registeredOffice.confirmedService,
-          preferredMailingAddress:
-            dossier.roPreferredMailingAddress || prev.registeredOffice.preferredMailingAddress,
-          primaryContactPerson:
-            dossier.roPrimaryContactPerson || prev.registeredOffice.primaryContactPerson,
-        },
-      }));
-      const activeLang = getInitialLanguage();
-      setFormData((prev) => translateDefaultTexts(prev, activeLang));
+      const activeLang = language || getInitialLanguage();
+      setFormData((prev) => {
+        const rawHydrated: DossierFormState = {
+          ...prev,
+          company: {
+            ...prev.company,
+            state: dossier.companyState || prev.company.state,
+            name: dossier.companyName || prev.company.name,
+            secondChoice: dossier.companySecondChoice || prev.company.secondChoice,
+            thirdChoice: dossier.companyThirdChoice || prev.company.thirdChoice,
+            startDate: dossier.companyStartDate || prev.company.startDate,
+            activity: dossier.companyActivity || prev.company.activity,
+            description: dossier.companyDescription || prev.company.description,
+            address: dossier.companyAddress || prev.company.address,
+            cityStateZip: dossier.companyCityStateZip || prev.company.cityStateZip,
+            phone: dossier.companyPhone || prev.company.phone,
+            email: dossier.companyEmail || prev.company.email,
+            website: dossier.companyWebsite || prev.company.website,
+          },
+          structure: {
+            ...prev.structure,
+            totalMembers: dossier.totalMembers || prev.structure.totalMembers,
+            managementType: dossier.managementType || prev.structure.managementType,
+            signingAuthority: dossier.signingAuthority || prev.structure.signingAuthority,
+            hasNonOwnerManagers: dossier.hasNonOwnerManagers || prev.structure.hasNonOwnerManagers,
+            managerNames: dossier.managerNames || prev.structure.managerNames,
+          },
+          members:
+            dossier.membersData && Array.isArray(dossier.membersData) && dossier.membersData.length > 0
+              ? dossier.membersData
+              : prev.members,
+          ein: {
+            ...prev.ein,
+            responsiblePartyName: dossier.einResponsiblePartyName || prev.ein.responsiblePartyName,
+            ssnOrItin: dossier.einSsnOrItin || prev.ein.ssnOrItin,
+            responsiblePartyAddress:
+              dossier.einResponsiblePartyAddress || prev.ein.responsiblePartyAddress,
+            hasEmployeesNext12Months:
+              dossier.einHasEmployeesNext12Months || prev.ein.hasEmployeesNext12Months,
+            estimatedEmployeesCount:
+              dossier.einEstimatedEmployeesCount || prev.ein.estimatedEmployeesCount,
+            firstWageDate: dossier.einFirstWageDate || prev.ein.firstWageDate,
+            fiscalYearEndMonth:
+              dossier.einFiscalYearEndMonth ||
+              prev.ein.fiscalYearEndMonth ||
+              (activeLang === "en" ? "December" : "Diciembre"),
+            irsActivity: dossier.einIrsActivity || prev.ein.irsActivity,
+            previouslyAppliedEin: dossier.einPreviouslyApplied || prev.ein.previouslyAppliedEin,
+          },
+          operatingAgreement: {
+            ...prev.operatingAgreement,
+            profitLossDistribution:
+              dossier.oaProfitLossDistribution || prev.operatingAgreement.profitLossDistribution,
+            isDistributionProportional:
+              dossier.oaIsDistributionProportional || prev.operatingAgreement.isDistributionProportional,
+            agreedDistributionExplanation:
+              dossier.oaAgreedDistributionExplanation ||
+              prev.operatingAgreement.agreedDistributionExplanation,
+            decisionMaking: dossier.oaDecisionMaking || prev.operatingAgreement.decisionMaking,
+            memberWithdrawalTerms:
+              dossier.oaMemberWithdrawalTerms || prev.operatingAgreement.memberWithdrawalTerms,
+            specialAgreements:
+              dossier.oaSpecialAgreements || prev.operatingAgreement.specialAgreements,
+          },
+          registeredOffice: {
+            ...prev.registeredOffice,
+            confirmedService: dossier.roConfirmedService ?? prev.registeredOffice.confirmedService,
+            preferredMailingAddress:
+              dossier.roPreferredMailingAddress || prev.registeredOffice.preferredMailingAddress,
+            primaryContactPerson:
+              dossier.roPrimaryContactPerson || prev.registeredOffice.primaryContactPerson,
+          },
+        };
+        return translateDefaultTexts(rawHydrated, activeLang);
+      });
 
       if (dossier.currentStep) {
         setCurrentStep(dossier.currentStep);
@@ -1027,7 +1072,10 @@ export function PostPaymentDossier() {
           phone: "",
           ownershipPercentage: 0,
           initialCapital: "",
-          roleOrTitle: "Member",
+          roleOrTitle:
+            language === "en"
+              ? `Member / Co-owner ${prev.members.length + 1}`
+              : `Member / Co-propietario ${prev.members.length + 1}`,
         },
       ],
       structure: {
